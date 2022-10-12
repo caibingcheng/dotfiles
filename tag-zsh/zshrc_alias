@@ -1,0 +1,4 @@
+source ~/.aliases
+
+alias vzsh="vim ~/.zshrc"
+alias sba="source ~/.zshrc"

@@ -1,0 +1,21 @@
+alias crc="code ~/.dotfiles"
+
+alias gb="git branch"
+alias gba="git branch -a"
+alias gss="git status"
+alias gll="git log"
+alias gaa="git add ."
+alias gmm="git commit"
+alias gma="git commit -a"
+alias gmd="git commit --amend"
+alias gdd="git diff"
+
+alias gits="git multi"
+alias gsb="gits branch"
+alias gsba="gits branch -a"
+alias gsss="gits status"
+alias gsll="gits log"
+
+alias ll="ls -lh"
+alias cls="clear"
+alias c="code"
