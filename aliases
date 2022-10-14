@@ -16,6 +16,10 @@ alias gsba="gits branch -a"
 alias gsss="gits status"
 alias gsll="gits log"
 
+if [ -f /bin/exa ]; then
+    alias ls="exa"
+fi
 alias ll="ls -lh"
+alias la="ls -lha"
 alias cls="clear"
 alias c="code"
