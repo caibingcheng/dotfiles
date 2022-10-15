@@ -17,4 +17,4 @@ cd ~/.dotfiles
 There's a few special files in the hierarchy.
 
 - **aliases**: Common aliases, such as `git`
-- **tag-zsh**: Configuration of zsh, some packages are recommended: `fzf/exa/ripgrep`
+- **tag-zsh/\***: Configuration of zsh, some packages are recommended: `fzf/exa/ripgrep`
