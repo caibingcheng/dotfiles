@@ -1,2 +1,2 @@
 TAGS="rcm zsh"
-EXCLUDES="README.md bootstrap"
+EXCLUDES="README.md setup"

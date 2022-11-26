@@ -1,0 +1,49 @@
+#!/bin/bash
+
+function installer() {
+    sudo apt $@
+}
+
+function check_dotfiles() {
+    if [[ ! -d $HOME/.dotfiles ]]; then
+        git clone https://github.com/caibingcheng/dotfiles.git $HOME/.dotfiles
+    fi
+}
+
+function program_exists() {
+    local ret='0'
+    command -v $1 >/dev/null 2>&1 || { local ret='1'; }
+
+    # fail on non-zero return value
+    if [ "$ret" -ne 0 ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+function install_rcm() {
+    if [[ "$(command -v lsrc)" == "" ]]; then
+        installer update &&
+        installer install rcm -y
+    fi
+}
+
+function setup_rc() {
+    rcup -t rcm
+    rcup -f && 
+    rcup -f -t zsh
+}
+
+function install_dep() {
+    return 0
+}
+
+function main() {
+    check_dotfiles
+    install_rcm
+    setup_rc
+    install_dep
+}
+
+main
