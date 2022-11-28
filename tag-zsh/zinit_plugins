@@ -31,8 +31,8 @@ zstyle ':fzf-tab:*' switch-group ',' '.'
 zinit ice lucid wait='0'
 zinit light zdharma-continuum/fast-syntax-highlighting
 
-GITEE_MIRROR=https://gitee.com/mirrors/oh-my-zsh/raw/master
+# omz plugin
 zinit ice lucid wait='0'
-zinit snippet ${GITEE_MIRROR}/plugins/colored-man-pages/colored-man-pages.plugin.zsh
+zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 zinit ice lucid wait='0'
-zinit snippet ${GITEE_MIRROR}/plugins/sudo/sudo.plugin.zsh
+zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh

@@ -12,9 +12,16 @@ rcup -t rcm
 rcup && rcup -t zsh
 ```
 
+Or,
+
+```
+curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/setup | bash
+```
+
 ### components
 
 There's a few special files in the hierarchy.
 
+- **setup**: Setup tool
 - **aliases**: Common aliases, such as `alias gb="git branch"`
 - **tag-zsh/\***: Configurations of zsh, all zsh-plugins are managed by `zinit`, some packages are recommended: `fzf/exa/ripgrep`

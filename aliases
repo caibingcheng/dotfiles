@@ -15,6 +15,7 @@ alias gsb="gits branch"
 alias gsba="gits branch -a"
 alias gsss="gits status"
 alias gsll="gits log"
+alias gsdd="gits diff"
 
 if [ -f /bin/exa ]; then
     alias ls="exa"
@@ -23,3 +24,12 @@ alias ll="ls -lh"
 alias la="ls -lha"
 alias cls="clear"
 alias c="code"
+alias line="wc -l"
+alias word="wc -w"
+alias byte="wc -c"
+
+# Macos
+if [ "$(uname)"=="Darwin" ];then
+    alias android-emuls="$HOME/Library/Android/sdk/emulator/emulator -list-avds"
+    alias android-emuup="$HOME/Library/Android/sdk/emulator/emulator -avd"
+fi

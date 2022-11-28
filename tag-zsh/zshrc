@@ -9,13 +9,6 @@ fi
 export PATH=$PATH:$HOME/bin
 ### For MacOS
 export HOMEBREW_NO_AUTO_UPDATE=true
-
-### Required fzf
-if [[ ! -f $HOME/.fzf/bin/fzf ]]; then
-    command git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && \ 
-    ~/.fzf/install --all
-fi
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
     
 ### Added by Zinit's installer
 if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then

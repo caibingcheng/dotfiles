@@ -1,7 +1,31 @@
 #!/bin/bash
 
+dependencies_=(
+    rcm.lsrc
+    exa
+    bat
+    fzf
+    ripgrep.rg
+)
+
+installer_=$@
 function installer() {
-    sudo apt $@
+    if [[ "$installer_" == "" ]]; then
+        sudo apt $@
+    else
+        $installer_ $@
+    fi
+}
+
+function installer_if() {
+    test_cmd=$1
+    if [[ "$2" != "" ]]; then
+        test_cmd=$2
+    fi
+    test_ret=$(command -v ${test_cmd})
+    if [[ "$test_ret" == "" ]]; then
+        installer install $1 -y
+    fi
 }
 
 function check_dotfiles() {
@@ -10,40 +34,24 @@ function check_dotfiles() {
     fi
 }
 
-function program_exists() {
-    local ret='0'
-    command -v $1 >/dev/null 2>&1 || { local ret='1'; }
-
-    # fail on non-zero return value
-    if [ "$ret" -ne 0 ]; then
-        return 1
-    fi
-
-    return 0
-}
-
-function install_rcm() {
-    if [[ "$(command -v lsrc)" == "" ]]; then
-        installer update &&
-        installer install rcm -y
-    fi
+function install_dependencies() {
+    installer update
+    for dependency in ${dependencies_[@]}; do
+        params=$(echo $dependency | awk -F'.' '{print $1" "$2}')
+        installer_if $params
+    done
 }
 
 function setup_rc() {
-    rcup -t rcm
+    rcup -t rcm &&
     rcup -f && 
     rcup -f -t zsh
 }
 
-function install_dep() {
-    return 0
-}
-
 function main() {
     check_dotfiles
-    install_rcm
+    install_dependencies
     setup_rc
-    install_dep
 }
 
 main
