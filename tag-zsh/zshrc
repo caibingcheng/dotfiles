@@ -1,15 +1,11 @@
-source ~/.aliases
+#!/bin/zsh
+
 source ~/.zshrc_alias
 source ~/.zshrc_bindkeys
 if [[ -f ~/.zshrc_local_rc ]]; then 
     source ~/.zshrc_local_rc
 fi
 
-### For common
-export PATH=$PATH:$HOME/bin
-### For MacOS
-export HOMEBREW_NO_AUTO_UPDATE=true
-    
 ### Added by Zinit's installer
 if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
@@ -25,3 +21,5 @@ autoload -Uz _zinit
 
 source ~/.zinit_plugins
 ### End of Zinit's installer chunk
+
+source ~/.cmmrc

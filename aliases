@@ -17,7 +17,7 @@ alias gsss="gits status"
 alias gsll="gits log"
 alias gsdd="gits diff"
 
-if [ -f /bin/exa ]; then
+if [ "$(command -v exa)" != "" ]; then
     alias ls="exa"
 fi
 alias ll="ls -lh"
@@ -27,6 +27,7 @@ alias c="code"
 alias line="wc -l"
 alias word="wc -w"
 alias byte="wc -c"
+alias bat="bat --color=always"
 
 # Macos
 if [ "$(uname)"=="Darwin" ];then

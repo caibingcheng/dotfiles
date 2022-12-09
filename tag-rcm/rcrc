@@ -1,2 +1,3 @@
-TAGS="rcm zsh"
-EXCLUDES="README.md setup"
+TAGS="rcm zsh bin"
+EXCLUDES="README.md setup LICENSE"
+UNDOTTED="bin"

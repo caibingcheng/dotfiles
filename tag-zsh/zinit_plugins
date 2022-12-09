@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 # zsh plugins
 zinit light zdharma-continuum/zinit-annex-as-monitor
 zinit light zdharma-continuum/zinit-annex-bin-gem-node
@@ -7,7 +9,7 @@ zinit light zdharma-continuum/zinit-annex-rust
 # theme
 zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
 zinit light sindresorhus/pure
-PURE_PROMPT_SYMBOL='>'
+PURE_PROMPT_SYMBOL='$'
 
 zinit ice lucid wait='0'
 zinit light-mode for \
@@ -16,23 +18,11 @@ zsh-users/zsh-completions
 # autosuggestions
 zinit ice lucid wait='0'
 zinit light zsh-users/zsh-autosuggestions
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
-
-# fzf-tab
-zinit ice lucid wait='0'
-zinit light Aloxaf/fzf-tab
-zstyle ':completion:complete:*:options' sort false
-zstyle ':completion:*:git-checkout:*' sort false
-zstyle ':completion:*:descriptions' format '[%d]'
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -1 --color=always $realpath'
-zstyle ':fzf-tab:*' switch-group ',' '.'
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=64
 
 zinit ice lucid wait='0'
 zinit light zdharma-continuum/fast-syntax-highlighting
 
 # omz plugin
-zinit ice lucid wait='0'
-zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 zinit ice lucid wait='0'
 zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh

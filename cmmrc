@@ -1,0 +1,29 @@
+source ~/.aliases
+
+### For common
+export PATH=$PATH:$HOME/bin
+
+### For MacOS
+### disable brew auto update
+export HOMEBREW_NO_AUTO_UPDATE=true
+
+### Tools/Plugins Env
+
+### fzf
+SHELL_TYPE=$(echo $SHELL)
+if [[ "$(echo $SHELL_TYPE| grep zsh)" != "" ]]; then
+  [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+else
+  [[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
+fi
+export FZF_COMPLETION_TRIGGER="??"
+export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_T_OPTS=$FZF_DEFAULT_OPTS
+### fzf end
+
+### bat
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+### bat end
+
+### End Tools/Plugins Env

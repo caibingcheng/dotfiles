@@ -5,6 +5,7 @@ dependencies_=(
     exa
     bat
     fzf
+    fd
     ripgrep.rg
 )
 
@@ -24,7 +25,7 @@ function installer_if() {
     fi
     test_ret=$(command -v ${test_cmd})
     if [[ "$test_ret" == "" ]]; then
-        installer install $1 -y
+        installer install $1
     fi
 }
 
@@ -44,8 +45,7 @@ function install_dependencies() {
 
 function setup_rc() {
     rcup -t rcm &&
-    rcup -f && 
-    rcup -f -t zsh
+    rcup -f
 }
 
 function main() {
