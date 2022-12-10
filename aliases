@@ -17,8 +17,11 @@ alias gsss="gits status"
 alias gsll="gits log"
 alias gsdd="gits diff"
 
-if [ "$(command -v exa)" != "" ]; then
+if [[ "$(command -v exa)" != "" ]]; then
     alias ls="exa"
+fi
+if [[ "$(command -v fdfind)" != "" ]]; then
+    alias fd="fdfind"
 fi
 alias ll="ls -lh"
 alias la="ls -lha"
@@ -30,7 +33,7 @@ alias byte="wc -c"
 alias bat="bat --color=always"
 
 # Macos
-if [ "$(uname)"=="Darwin" ];then
+if [[ "$(uname)" == "Darwin" ]]; then
     alias android-emuls="$HOME/Library/Android/sdk/emulator/emulator -list-avds"
     alias android-emuup="$HOME/Library/Android/sdk/emulator/emulator -avd"
 fi

@@ -1,13 +1,11 @@
 #!/bin/bash
 
-dependencies_=(
-    rcm.lsrc
-    exa
-    bat
-    fzf
-    fd
-    ripgrep.rg
-)
+dependencies_=()
+if [[ "$(uname)" == "Darwin" ]]; then
+    dependencies_=(rcm.lsrc exa bat fzf fd ripgrep.rg)
+else
+    dependencies_=(rcm.lsrc exa bat fzf fd-find.fd ripgrep.rg)
+fi
 
 installer_=$@
 function installer() {
