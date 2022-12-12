@@ -12,9 +12,9 @@ export HOMEBREW_NO_AUTO_UPDATE=true
 ### fzf
 if [[ ! -d ~/.fzf ]]; then
   git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-  ~/.fzf/install --all
+  ~/.fzf/install --all --no-update-rc
 fi
-SHELL_TYPE=$(echo $SHELL)
+SHELL_TYPE=$(ps -x | grep $$)
 if [[ "$(echo $SHELL_TYPE | grep zsh)" != "" ]]; then
   [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 else
