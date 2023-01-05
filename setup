@@ -43,7 +43,7 @@ function install_dependencies() {
 
 function setup_rc() {
     rcup -t rcm &&
-    rcup -f
+    rcup && rcup -t zsh
 }
 
 function main() {

@@ -4,6 +4,11 @@ Your dotfiles are how you personalize your system. These are mine.
 
 ### install
 
+Set default shell to zsh (If needed):
+```
+chsh -s /bin/zsh
+```
+
 These dotfiles are managed by `rcm`. Run this to install:
 
 ```
