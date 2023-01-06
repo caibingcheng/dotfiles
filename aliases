@@ -26,7 +26,7 @@ fi
 alias ll="ls -lh"
 alias la="ls -lha"
 alias cls="clear"
-alias c="code"
+alias c="code ."
 alias line="wc -l"
 alias word="wc -w"
 alias byte="wc -c"
