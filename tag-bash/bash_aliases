@@ -1,0 +1,6 @@
+source ~/.cmmrc
+alias sba="source ~/.bashrc"
+
+if [[ -f ~/.bash_local_rc ]]; then
+    source ~/.bash_local_rc
+fi

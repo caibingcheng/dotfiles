@@ -2,16 +2,18 @@
 
 dependencies_=()
 if [[ "$(uname)" == "Darwin" ]]; then
-    dependencies_=(rcm.lsrc exa bat fd ripgrep.rg)
+    dependencies_=(cargo.cargo.brew exa.exa.cargo bat.bat.cargo fd.fd.cargo ripgrep.rg.cargo)
 else
-    dependencies_=(rcm.lsrc exa bat fd-find.fd ripgrep.rg)
+    dependencies_=(cargo.cargo. exa.exa.cargo bat.bat.cargo fd-find.fd.cargo ripgrep.rg.cargo)
 fi
 
-installer_=$@
+installer_=""
 function installer() {
     if [[ "$installer_" == "" ]]; then
+        echo sudo apt $@
         sudo apt $@
     else
+        echo $installer_ $@
         $installer_ $@
     fi
 }
@@ -23,6 +25,11 @@ function installer_if() {
     fi
     test_ret=$(command -v ${test_cmd})
     if [[ "$test_ret" == "" ]]; then
+        if [[ "$3" != "" ]]; then
+            installer_=$3
+        else
+            installer_=""
+        fi
         installer install $1
     fi
 }
@@ -34,22 +41,40 @@ function check_dotfiles() {
 }
 
 function install_dependencies() {
-    installer update
+    # installer update
     for dependency in ${dependencies_[@]}; do
-        params=$(echo $dependency | awk -F'.' '{print $1" "$2}')
+        params=$(echo $dependency | awk -F'.' '{print $1" "$2" "$3}')
         installer_if $params
     done
 }
 
+function install_rcm() {
+    if [[ "$(command -v rcup)" != "" ]]; then
+        return 0
+    fi
+    if [[ "$(uname)" == "Darwin" ]]; then
+        brew install rcm
+    else
+        sudo wget -q https://apt.thoughtbot.com/thoughtbot.gpg.key -O /etc/apt/trusted.gpg.d/thoughtbot.gpg
+        echo "deb https://apt.thoughtbot.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/thoughtbot.list
+        sudo apt-get update
+        sudo apt-get install rcm
+    fi
+}
+
 function setup_rc() {
     rcup -t rcm &&
-    rcup && rcup -t zsh
+    rcup -x LICENSE README.md setup
+    if [[ "$@" != "" ]]; then
+        rcup -t $@
+    fi
 }
 
 function main() {
+    install_rcm
     check_dotfiles
     install_dependencies
-    setup_rc
+    setup_rc $@
 }
 
-main
+main $@

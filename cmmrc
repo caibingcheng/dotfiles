@@ -1,7 +1,7 @@
-source ~/.aliases
-
 ### For common
-export PATH=$PATH:$HOME/bin
+export PATH=$PATH:$HOME/bin:$HOME/.cargo/bin
+
+source ~/.aliases
 
 ### For MacOS
 ### disable brew auto update
