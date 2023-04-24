@@ -24,7 +24,7 @@ export FZF_COMPLETION_TRIGGER="??"
 if [[ "$(uname)" == "Darwin" ]]; then
   export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 else
-  export FZF_DEFAULT_COMMAND="fdfind --type f --hidden --follow --exclude .git"
+  export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_CTRL_T_OPTS=$FZF_DEFAULT_OPTS
@@ -35,3 +35,17 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 ### bat end
 
 ### End Tools/Plugins Env
+
+### Comm functions
+git_branch()
+{
+   branch=`git rev-parse --abbrev-ref HEAD 2>/dev/null`
+   if [ "${branch}" != "" ]
+   then
+       if [ "${branch}" = "(no branch)" ]
+       then
+           branch="(`git rev-parse --short HEAD`...)"
+       fi
+       echo "[$branch] "
+   fi
+}

@@ -4,3 +4,5 @@ alias sba="source ~/.bashrc"
 if [[ -f ~/.bash_local_rc ]]; then
     source ~/.bash_local_rc
 fi
+
+PS1='\[\033[01;33m\]$(git_branch)${debian_chroot:+($debian_chroot):}\[\033[01;34m\]\w\[\033[01;33m\]\n\$\[\033[00m\] '
