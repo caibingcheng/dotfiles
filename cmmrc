@@ -16,16 +16,12 @@ if [[ ! -d ~/.fzf ]]; then
 fi
 SHELL_TYPE=$(ps -x | grep $$)
 if [[ "$(echo $SHELL_TYPE | grep zsh)" != "" ]]; then
-  [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+  source ~/.fzf.zsh
 else
-  [[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
+  source ~/.fzf.bash
 fi
 export FZF_COMPLETION_TRIGGER="??"
-if [[ "$(uname)" == "Darwin" ]]; then
-  export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
-else
-  export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
-fi
+export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_CTRL_T_OPTS=$FZF_DEFAULT_OPTS
 ### fzf end

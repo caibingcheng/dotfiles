@@ -15,9 +15,10 @@ These dotfiles are managed by `rcm`. Run this to install:
 git clone https://github.com/caibingcheng/dotfiles.git ~/.dotfiles
 rcup -t rcm
 rcup && rcup -t zsh
+# rcup && rcup -t bash
 ```
 
-Or,
+Or, config bash as default.
 
 ```
 curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/setup | bash
@@ -32,3 +33,4 @@ There's a few special files in the hierarchy.
 - **cmmrc**: Common rc
 - **bin**: Some useful scripts
 - **tag-zsh/\***: Configurations of zsh, all zsh-plugins are managed by `zinit`, some packages are recommended: `fzf/exa/ripgrep`
+- **tag-bash/\***: Configurations of bash

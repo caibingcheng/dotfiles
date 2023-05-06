@@ -74,7 +74,16 @@ function main() {
     install_rcm
     check_dotfiles
     install_dependencies
-    setup_rc $@
+    target=$@
+    if [[ "$target" == "" ]]; then
+        SHELL_TYPE=$(ps -x | grep $$)
+        if [[ "$(echo $SHELL_TYPE | grep zsh)" != "" ]]; then
+            target=zsh
+        else
+            target=bash
+        fi
+    fi
+    echo setup_rc $target
 }
 
 main $@

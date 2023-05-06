@@ -1,5 +1,5 @@
 source ~/.cmmrc
-alias sba="source ~/.bashrc"
+alias sba="source ~/.bashrc && source ~/.cmmrc"
 
 if [[ -f ~/.bash_local_rc ]]; then
     source ~/.bash_local_rc
