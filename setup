@@ -2,35 +2,29 @@
 
 dependencies_=()
 if [[ "$(uname)" == "Darwin" ]]; then
-    dependencies_=(cargo.cargo.brew exa.exa.cargo bat.bat.cargo fd.fd.cargo ripgrep.rg.cargo)
+# software.aliasname.installer
+    dependencies_=(rcm.rcup.brew cargo.cargo.brew exa.exa.cargo bat.bat.cargo fd.fd.cargo ripgrep.rg.cargo)
 else
-    dependencies_=(cargo.cargo. exa.exa.cargo bat.bat.cargo fd-find.fd.cargo ripgrep.rg.cargo)
+    dependencies_=(rcm.rcup.apt cargo.cargo.apt exa.exa.cargo bat.bat.cargo fd-find.fd.cargo ripgrep.rg.cargo)
 fi
 
-installer_=""
+installer_="apt"
 function installer() {
-    if [[ "$installer_" == "" ]]; then
-        echo sudo apt $@
+    echo $installer_ $@
+    if [[ "$installer_" == "apt" ]]; then
         sudo apt $@
     else
-        echo $installer_ $@
         $installer_ $@
     fi
 }
 
 function installer_if() {
-    test_cmd=$1
-    if [[ "$2" != "" ]]; then
-        test_cmd=$2
-    fi
-    test_ret=$(command -v ${test_cmd})
-    if [[ "$test_ret" == "" ]]; then
-        if [[ "$3" != "" ]]; then
-            installer_=$3
-        else
-            installer_=""
-        fi
-        installer install $1
+    software_name=$1
+    command_name=$2
+    installer_name=$3
+    if [[ "$(command -v ${command_name})" == "" ]]; then
+        installer_=${installer_name}
+        installer install $software_name
     fi
 }
 
@@ -52,19 +46,15 @@ function install_rcm() {
     if [[ "$(command -v rcup)" != "" ]]; then
         return 0
     fi
-    if [[ "$(uname)" == "Darwin" ]]; then
-        brew install rcm
-    else
+    if [[ "$(uname)" == "Linux" ]]; then
         sudo wget -q https://apt.thoughtbot.com/thoughtbot.gpg.key -O /etc/apt/trusted.gpg.d/thoughtbot.gpg
         echo "deb https://apt.thoughtbot.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/thoughtbot.list
         sudo apt-get update
-        sudo apt-get install rcm
     fi
 }
 
 function setup_rc() {
-    rcup -t rcm &&
-    rcup -x LICENSE README.md setup
+    rcup -t rcm -x LICENSE -x README.md -x setup
     if [[ "$@" != "" ]]; then
         rcup -t $@
     fi
@@ -74,16 +64,13 @@ function main() {
     install_rcm
     check_dotfiles
     install_dependencies
+
     target=$@
+    SHELL_TYPE=$(echo $SHELL | awk -F'/' '{print $NF}')
     if [[ "$target" == "" ]]; then
-        SHELL_TYPE=$(ps -x | grep $$)
-        if [[ "$(echo $SHELL_TYPE | grep zsh)" != "" ]]; then
-            target=zsh
-        else
-            target=bash
-        fi
+        target=$SHELL_TYPE
     fi
-    echo setup_rc $target
+    setup_rc $target
 }
 
 main $@

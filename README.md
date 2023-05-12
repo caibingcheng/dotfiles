@@ -4,24 +4,16 @@ Your dotfiles are how you personalize your system. These are mine.
 
 ### install
 
-Set default shell to zsh (If needed):
-```
-chsh -s /bin/zsh
-```
-
-These dotfiles are managed by `rcm`. Run this to install:
+Configure bash dotfiles:
 
 ```
-git clone https://github.com/caibingcheng/dotfiles.git ~/.dotfiles
-rcup -t rcm
-rcup && rcup -t zsh
-# rcup && rcup -t bash
+curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/setup | bash -s bash
 ```
 
-Or, config bash as default.
+Configure zsh dotfiles:
 
 ```
-curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/setup | bash
+curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/setup | bash -s zsh
 ```
 
 ### components
