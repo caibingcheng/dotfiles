@@ -1,5 +1,9 @@
 alias crc="code ~/.dotfiles"
 
+alias ssh="autossh"
+alias ntpon="timedatectl set-ntp yes"
+alias ntpoff="timedatectl set-ntp no"
+
 alias gb="git branch"
 alias gba="git branch -a"
 alias gss="git status"
@@ -31,6 +35,7 @@ alias line="wc -l"
 alias word="wc -w"
 alias byte="wc -c"
 alias bat="bat --color=always"
+alias mmem="top -b -o +%MEM | head -n 20"
 
 # Macos
 if [[ "$(uname)" == "Darwin" ]]; then

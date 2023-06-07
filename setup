@@ -3,9 +3,9 @@
 dependencies_=()
 if [[ "$(uname)" == "Darwin" ]]; then
 # software.aliasname.installer
-    dependencies_=(rcm.rcup.brew cargo.cargo.brew exa.exa.cargo bat.bat.cargo fd.fd.cargo ripgrep.rg.cargo)
+    dependencies_=(autossh.autossh.brew rcm.rcup.brew cargo.cargo.brew exa.exa.cargo bat.bat.cargo fd.fd.cargo ripgrep.rg.cargo)
 else
-    dependencies_=(rcm.rcup.apt cargo.cargo.apt exa.exa.cargo bat.bat.cargo fd-find.fd.cargo ripgrep.rg.cargo)
+    dependencies_=(autossh.autossh.atp rcm.rcup.apt cargo.cargo.apt exa.exa.cargo bat.bat.cargo fd-find.fd.cargo ripgrep.rg.cargo)
 fi
 
 installer_="apt"
