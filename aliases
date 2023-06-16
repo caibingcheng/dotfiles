@@ -23,6 +23,8 @@ alias gsdd="gits diff"
 
 if [[ "$(command -v exa)" != "" ]]; then
     alias ls="exa"
+else
+    alias ls="/bin/ls"
 fi
 if [[ "$(command -v fdfind)" != "" ]]; then
     alias fd="fdfind"

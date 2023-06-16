@@ -1,36 +1,107 @@
 #!/bin/bash
 
 dependencies_=()
-if [[ "$(uname)" == "Darwin" ]]; then
 # software.aliasname.installer
-    dependencies_=(autossh.autossh.brew rcm.rcup.brew cargo.cargo.brew exa.exa.cargo bat.bat.cargo fd.fd.cargo ripgrep.rg.cargo)
+if [[ "$(uname)" == "Darwin" ]]; then
+    dependencies_=( \
+        rcm.rcup.brew \
+        autossh.autossh.brew \
+        cargo.cargo.brew \
+        exa.exa.cargo \
+        bat.bat.cargo \
+        fd.fd.cargo \
+        ripgrep.rg.cargo \
+    )
 else
-    dependencies_=(autossh.autossh.atp rcm.rcup.apt cargo.cargo.apt exa.exa.cargo bat.bat.cargo fd-find.fd.cargo ripgrep.rg.cargo)
+    dependencies_=( \
+        rcm.rcup.apt \
+        autossh.autossh.apt \
+        cargo.cargo.apt \
+        exa.exa.apt,cargo \
+        bat.bat.apt,cargo \
+        fd-find.fd,fdfind.apt,cargo \
+        ripgrep.rg.apt,cargo \
+    )
 fi
 
-installer_="apt"
 function installer() {
-    echo $installer_ $@
-    if [[ "$installer_" == "apt" ]]; then
-        sudo apt $@
-    else
-        $installer_ $@
+    installer_name=$1
+    shift
+    software_name=$@
+
+    if [[ "$installer_name" == "brew" ]]; then
+        result=$(brew install $software_name 2>&1 > /dev/null)
+    elif [[ "$installer_name" == "apt" ]]; then
+        result=$(sudo apt-get install -y $software_name 2>&1 > /dev/null)
+    elif [[ "$installer_name" == "cargo" ]]; then
+        result=$(cargo install $software_name 2>&1 > /dev/null)
     fi
 }
 
 function installer_if() {
-    software_name=$1
-    command_name=$2
-    installer_name=$3
-    if [[ "$(command -v ${command_name})" == "" ]]; then
-        installer_=${installer_name}
-        installer install $software_name
+    softwares=$(echo $1 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
+    commands=$(echo $2 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
+    installers=$(echo $3 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
+
+    # check if software exists
+    echo -n "check $softwares ... "
+    software_status="failed"
+    for test_command in ${commands[@]}; do
+        if [[ "$(command -v ${test_command})" != "" ]]; then
+            # color green
+            echo -e "\033[32m[OK]\033[0m"
+            software_status="success"
+            return 0
+        fi
+    done
+    if [[ "$software_status" == "failed" ]]; then
+        # color red
+        echo -e "\033[31m[NO]\033[0m"
     fi
+
+    # install software
+    for software_name in ${softwares[@]}; do
+        for installer_name in ${installers[@]}; do
+            if [[ "$(command -v ${installer_name})" != "" ]]; then
+                echo -n "install $software_name with $installer_name ... "
+                installer $installer_name $software_name
+                install_status="failed"
+                for test_command in ${commands[@]}; do
+                    if [[ "$(command -v ${test_command})" != "" ]]; then
+                        # color green
+                        echo -e "\033[32m[OK]\033[0m"
+                        install_status="success"
+                        return 0
+                    fi
+                done
+                if [[ "$install_status" == "failed" ]]; then
+                    # color red
+                    echo -e "\033[31m[NO]\033[0m"
+                fi
+            fi
+        done
+    done
 }
 
 function check_dotfiles() {
+    echo -n "check dotfiles ... "
     if [[ ! -d $HOME/.dotfiles ]]; then
-        git clone https://github.com/caibingcheng/dotfiles.git $HOME/.dotfiles
+        # color red
+        echo -e "\033[31m[NO]\033[0m"
+        echo -n "clone dotfiles ... "
+        result=$(git clone https://github.com/caibingcheng/dotfiles.git $HOME/.dotfiles 2>&1 > /dev/null)
+        if [[ ! -d $HOME/.dotfiles ]]; then
+            # color red
+            echo -e "\033[31m[NO]\033[0m"
+            echo $result
+            exit 1
+        else
+            # color green
+            echo -e "\033[32m[OK]\033[0m"
+        fi
+    else
+        # color green
+        echo -e "\033[32m[OK]\033[0m"
     fi
 }
 
@@ -54,6 +125,11 @@ function install_rcm() {
 }
 
 function setup_rc() {
+    if [[ "$(command -v rcup)" == "" ]]; then
+        echo "rcup not found"
+        exit 1
+    fi
+
     rcup -t rcm -x LICENSE -x README.md -x setup
     if [[ "$@" != "" ]]; then
         rcup -t $@
