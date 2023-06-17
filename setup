@@ -1,41 +1,24 @@
 #!/bin/bash
 
-target=$1
-nsudo=$2
-if [[ "$nsudo" == "sudo" ]]; then
-    sudo /bin/ls &>/dev/null
-fi
-candidates=(zsh bash)
-dotfiles=https://github.com/caibingcheng/dotfiles.git
-dependencies=()
-# software.aliasname.installer
-if [[ "$(uname)" == "Darwin" ]]; then
-    dependencies=( \
-        rcm.rcup.brew \
-        autossh.autossh.brew \
-        cargo.cargo.brew \
-        exa.exa.cargo \
-        bat.bat.cargo \
-        fd.fd.cargo \
-        ripgrep.rg.cargo \
-    )
-else
-    dependencies=( \
-        rcm.rcup.apt \
-        git.git.apt \
-        autossh.autossh.apt \
-        cargo.cargo.apt \
-        exa.exa.apt,cargo \
-        bat.bat.apt,cargo \
-        fd-find.fd,fdfind.apt,cargo \
-        ripgrep.rg.apt,cargo \
-    )
-fi
+function echo_check() {
+    echo -n "check $1 ... "
+}
 
-shell=$(echo $SHELL | awk -F'/' '{print $NF}')
-if [[ "$target" == "" ]]; then
-    target=$shell
-fi
+function echo_install() {
+    echo -n "   install $1 ... "
+}
+
+function echo_clone() {
+    echo -n "   clone $1 ... "
+}
+
+function echo_clean() {
+    # clear current line
+    echo -ne "\033[2K\r"
+    # move cursor to the beginning of line
+    echo -ne "\033[0G"
+}
+
 function echo_ok() {
     echo -e "\033[32m[OK]\033[0m"
 }
@@ -44,8 +27,62 @@ function echo_no() {
     echo -e "\033[31m[NO]\033[0m"
 }
 
+# arguments
+# ./setup bash
+# ./setup bash sudo
+# ./setup bash sudo --optional
+# ./setup bash sudo --no-basic
+# get arguments
+target=$1
+if [[ "$target" == "" ]]; then
+    target=$(echo $SHELL | awk -F'/' '{print $NF}')
+fi
+shift
+
+nsudo=""
+nrequired=required
+nbasic=basic
+noptional=""
+while [[ "$1" != "" ]]; do
+    case $1 in
+        sudo)
+            nsudo=sudo
+            ;;
+        --basic)
+            nbasic=basic
+            ;;
+        --no-basic)
+            nbasic=""
+            ;;
+        --required)
+            nrequired=required
+            ;;
+        --optional)
+            noptional=optional
+            ;;
+        *)
+            echo "unknown argument: $1"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$nsudo" == "sudo" ]]; then
+    sudo /bin/ls &>/dev/null
+fi
+
+candidates=(zsh bash)
+dotfiles=https://github.com/caibingcheng/dotfiles.git
+dotfiles_dir=$HOME/.dotfiles
+dependencies_path=$dotfiles_dir/dependencies.txt
+dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/master/dependencies.txt
+dependencies_required=()
+dependencies_basic=()
+dependencies_optional=()
+
 valid=no
-echo -n "check $target ... "
+echo_check $target
 for candidate in ${candidates[@]}; do
     if [[ "$target" == "$candidate" ]]; then
         valid=yes
@@ -59,17 +96,31 @@ else
     echo_ok
 fi
 
+# basic installers
+echo_check installers
+binstaller=""
+if [[ "$(command -v apt)" != "" ]]; then
+    binstaller=apt
+elif [[ "$(command -v brew)" != "" ]]; then
+    binstaller=brew
+fi
+if [[ "$binstaller" == "" ]]; then
+    echo_no
+    exit 1
+else
+    # roll back to the line
+    echo_clean
+    echo_check $binstaller
+    echo_ok
+fi
+
 function installer() {
     installer_name=$1
     shift
     software_name=$@
-
-    if [[ "$installer_name" == "brew" ]]; then
-        brew install $software_name &>/dev/null
-    elif [[ "$installer_name" == "apt" ]]; then
-        ${nsudo} apt-get install -y $software_name &>/dev/null
-    elif [[ "$installer_name" == "cargo" ]]; then
-        cargo install $software_name &>/dev/null
+    $installer_name install $software_name &>/dev/null
+    if [[ "$?" != "0" ]]; then
+        $nsudo $installer_name install $software_name &>/dev/null
     fi
 }
 
@@ -83,7 +134,7 @@ function installer_if() {
         export PATH=$PATH:$HOME/.cargo/bin
     fi
 
-    echo -n "check $softwares ... "
+    echo_check $softwares
     software_status="failed"
     for test_command in ${commands[@]}; do
         if [[ "$(command -v ${test_command})" != "" ]]; then
@@ -100,7 +151,7 @@ function installer_if() {
     for software_name in ${softwares[@]}; do
         for installer_name in ${installers[@]}; do
             if [[ "$(command -v ${installer_name})" != "" ]]; then
-                echo -n "   install $software_name with $installer_name ... "
+                echo_install "$software_name with $installer_name"
                 installer $installer_name $software_name
                 install_status="failed"
                 for test_command in ${commands[@]}; do
@@ -119,12 +170,12 @@ function installer_if() {
 }
 
 function check_dotfiles() {
-    echo -n "check dotfiles ... "
-    if [[ ! -d $HOME/.dotfiles ]]; then
+    echo_check dotfiles
+    if [[ ! -d $dotfiles_dir ]]; then
         echo_no
-        echo -n "   clone dotfiles ... "
-        git clone $dotfiles $HOME/.dotfiles &>/dev/null
-        if [[ ! -d $HOME/.dotfiles ]]; then
+        echo_clone dotfiles
+        git clone $dotfiles $dotfiles_dir &>/dev/null
+        if [[ ! -d $dotfiles_dir ]]; then
             echo_no
             exit 1
         else
@@ -135,15 +186,52 @@ function check_dotfiles() {
     fi
 }
 
+function extract_dependencies() {
+    dependencies=""
+    if [[ -f $dependencies_path ]]; then
+        dependencies=$(cat $dependencies_path)
+    else
+        dependencies=$(curl -s $dependencies_url)
+    fi
+    dependencies=$(echo $dependencies | sed "s/\${binstaller}/$binstaller/g")
+
+    current_dependencies_type=""
+    for dependency in ${dependencies[@]}; do
+        if [[ "$dependency" == "" ]]; then
+            continue
+        fi
+
+        if [[ "$dependency" == "==required==" ]]; then
+            current_dependencies_type="required"
+            continue
+        elif [[ "$dependency" == "==optional==" ]]; then
+            current_dependencies_type="optional"
+            continue
+        elif [[ "$dependency" == "==basic==" ]]; then
+            current_dependencies_type="basic"
+            continue
+        fi
+
+        if [[ "$current_dependencies_type" == "required" ]]; then
+            dependencies_required+=($dependency)
+        elif [[ "$current_dependencies_type" == "optional" ]]; then
+            dependencies_optional+=($dependency)
+        elif [[ "$current_dependencies_type" == "basic" ]]; then
+            dependencies_basic+=($dependency)
+        fi
+    done
+}
+
 function install_dependencies() {
     # installer update
+    dependencies=$@
     for dependency in ${dependencies[@]}; do
         params=$(echo $dependency | awk -F'.' '{print $1" "$2" "$3}')
         installer_if $params
     done
 }
 
-function install_rcm() {
+function preinstall() {
     if [[ "$(command -v rcup)" != "" ]]; then
         return 0
     fi
@@ -160,7 +248,7 @@ function setup_rc() {
         exit 1
     fi
 
-    rcup -t rcm -x LICENSE -x README.md -x setup
+    rcup -t rcm -x LICENSE -x README.md -x setup -x dependenc*
     if [[ "$@" != "" ]]; then
         rcup -t $@
     fi
@@ -176,12 +264,19 @@ function echo_notice() {
 }
 
 function main() {
-    install_rcm
-    install_dependencies
-    # keep dependencies first
-    check_dotfiles
+    extract_dependencies
 
+    preinstall
+    install_dependencies ${dependencies_required[@]}
+    check_dotfiles
     setup_rc $target
+
+    if [[ "$nbasic" != "" ]]; then
+        install_dependencies ${dependencies_basic[@]}
+    fi
+    if [[ "$noptional" != "" ]]; then
+        install_dependencies ${dependencies_optional[@]}
+    fi
     echo_notice
 }
 

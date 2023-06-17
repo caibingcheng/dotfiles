@@ -1,0 +1,11 @@
+==required==
+rcm.rcup.${binstaller}
+git.git.${binstaller}
+==basic==
+autossh.autossh.${binstaller}
+cargo.cargo.${binstaller}
+exa.exa.${binstaller},cargo
+bat.bat.${binstaller},cargo
+fd-find.fd,fdfind.${binstaller},cargo
+ripgrep.rg.${binstaller},cargo
+==optional==
