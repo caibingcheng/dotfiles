@@ -1,9 +1,16 @@
 #!/bin/bash
 
-dependencies_=()
+target=$1
+nsudo=$2
+if [[ "$nsudo" == "sudo" ]]; then
+    sudo /bin/ls &>/dev/null
+fi
+candidates=(zsh bash)
+dotfiles=https://github.com/caibingcheng/dotfiles.git
+dependencies=()
 # software.aliasname.installer
 if [[ "$(uname)" == "Darwin" ]]; then
-    dependencies_=( \
+    dependencies=( \
         rcm.rcup.brew \
         autossh.autossh.brew \
         cargo.cargo.brew \
@@ -13,8 +20,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
         ripgrep.rg.cargo \
     )
 else
-    dependencies_=( \
+    dependencies=( \
         rcm.rcup.apt \
+        git.git.apt \
         autossh.autossh.apt \
         cargo.cargo.apt \
         exa.exa.apt,cargo \
@@ -24,17 +32,44 @@ else
     )
 fi
 
+shell=$(echo $SHELL | awk -F'/' '{print $NF}')
+if [[ "$target" == "" ]]; then
+    target=$shell
+fi
+function echo_ok() {
+    echo -e "\033[32m[OK]\033[0m"
+}
+
+function echo_no() {
+    echo -e "\033[31m[NO]\033[0m"
+}
+
+valid=no
+echo -n "check $target ... "
+for candidate in ${candidates[@]}; do
+    if [[ "$target" == "$candidate" ]]; then
+        valid=yes
+    fi
+done
+if [[ "$valid" == "no" ]]; then
+    echo_no
+    echo "support targets: ${candidates}"
+    exit 1
+else
+    echo_ok
+fi
+
 function installer() {
     installer_name=$1
     shift
     software_name=$@
 
     if [[ "$installer_name" == "brew" ]]; then
-        result=$(brew install $software_name 2>&1 > /dev/null)
+        brew install $software_name &>/dev/null
     elif [[ "$installer_name" == "apt" ]]; then
-        result=$(sudo apt-get install -y $software_name 2>&1 > /dev/null)
+        ${nsudo} apt-get install -y $software_name &>/dev/null
     elif [[ "$installer_name" == "cargo" ]]; then
-        result=$(cargo install $software_name 2>&1 > /dev/null)
+        cargo install $software_name &>/dev/null
     fi
 }
 
@@ -43,40 +78,40 @@ function installer_if() {
     commands=$(echo $2 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
     installers=$(echo $3 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
 
-    # check if software exists
+    # temp env
+    if [[ "$(echo $PATH | grep $HOME/.cargo/bin)" == "" ]]; then
+        export PATH=$PATH:$HOME/.cargo/bin
+    fi
+
     echo -n "check $softwares ... "
     software_status="failed"
     for test_command in ${commands[@]}; do
         if [[ "$(command -v ${test_command})" != "" ]]; then
-            # color green
-            echo -e "\033[32m[OK]\033[0m"
+            echo_ok
             software_status="success"
             return 0
         fi
     done
     if [[ "$software_status" == "failed" ]]; then
-        # color red
-        echo -e "\033[31m[NO]\033[0m"
+        echo_no
     fi
 
     # install software
     for software_name in ${softwares[@]}; do
         for installer_name in ${installers[@]}; do
             if [[ "$(command -v ${installer_name})" != "" ]]; then
-                echo -n "install $software_name with $installer_name ... "
+                echo -n "   install $software_name with $installer_name ... "
                 installer $installer_name $software_name
                 install_status="failed"
                 for test_command in ${commands[@]}; do
                     if [[ "$(command -v ${test_command})" != "" ]]; then
-                        # color green
-                        echo -e "\033[32m[OK]\033[0m"
+                        echo_ok
                         install_status="success"
                         return 0
                     fi
                 done
                 if [[ "$install_status" == "failed" ]]; then
-                    # color red
-                    echo -e "\033[31m[NO]\033[0m"
+                    echo_no
                 fi
             fi
         done
@@ -86,28 +121,23 @@ function installer_if() {
 function check_dotfiles() {
     echo -n "check dotfiles ... "
     if [[ ! -d $HOME/.dotfiles ]]; then
-        # color red
-        echo -e "\033[31m[NO]\033[0m"
-        echo -n "clone dotfiles ... "
-        result=$(git clone https://github.com/caibingcheng/dotfiles.git $HOME/.dotfiles 2>&1 > /dev/null)
+        echo_no
+        echo -n "   clone dotfiles ... "
+        git clone $dotfiles $HOME/.dotfiles &>/dev/null
         if [[ ! -d $HOME/.dotfiles ]]; then
-            # color red
-            echo -e "\033[31m[NO]\033[0m"
-            echo $result
+            echo_no
             exit 1
         else
-            # color green
-            echo -e "\033[32m[OK]\033[0m"
+            echo_ok
         fi
     else
-        # color green
-        echo -e "\033[32m[OK]\033[0m"
+        echo_ok
     fi
 }
 
 function install_dependencies() {
     # installer update
-    for dependency in ${dependencies_[@]}; do
+    for dependency in ${dependencies[@]}; do
         params=$(echo $dependency | awk -F'.' '{print $1" "$2" "$3}')
         installer_if $params
     done
@@ -136,17 +166,23 @@ function setup_rc() {
     fi
 }
 
-function main() {
-    install_rcm
-    check_dotfiles
-    install_dependencies
-
-    target=$@
-    SHELL_TYPE=$(echo $SHELL | awk -F'/' '{print $NF}')
-    if [[ "$target" == "" ]]; then
-        target=$SHELL_TYPE
+function echo_notice() {
+    if [[ "$target" == "bash" ]]; then
+        echo "run 'source $HOME/.bashrc' to enable config"
     fi
-    setup_rc $target
+    if [[ "$target" == "zsh" ]]; then
+        echo "run 'source $HOME/.zshrc' to enable config"
+    fi
 }
 
-main $@
+function main() {
+    install_rcm
+    install_dependencies
+    # keep dependencies first
+    check_dotfiles
+
+    setup_rc $target
+    echo_notice
+}
+
+main
