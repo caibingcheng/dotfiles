@@ -1,0 +1,4 @@
+#!/bin/bash
+
+do_link $HOME/.bash_aliases $dotfiles_dir/bash/bash_aliases
+do_link $HOME/.bashrc $dotfiles_dir/bash/bashrc

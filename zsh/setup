@@ -1,0 +1,6 @@
+#!/bin/bash
+
+do_link $HOME/.zshrc $dotfiles_dir/zsh/zshrc
+do_link $HOME/.zinit_plugins $dotfiles_dir/zsh/zinit_plugins
+do_link $HOME/.zshrc_alias $dotfiles_dir/zsh/zshrc_alias
+do_link $HOME/.zshrc_bindkeys $dotfiles_dir/zsh/zshrc_bindkeys
