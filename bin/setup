@@ -1,3 +1,6 @@
 #!/bin/bash
 
+do_check [ -d "$HOME/bin" ] || mkdir -p "$HOME/bin" &
+check $! "check bin" "bin not found"
+
 do_link $HOME/bin/sf $dotfiles_dir/bin/sf

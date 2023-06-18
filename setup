@@ -176,6 +176,7 @@ function do_link() {
     if [[ "$?" == "1" ]]; then
         do_check ln -s $target $link &
         check $! "link $link --> $target"
+        read_on_fail "replace $link with $target [y/N]?"
     fi
     read_on_fail "replace $link with $target [y/N]?"
     if [ "$REPLY" == "y" ]; then
