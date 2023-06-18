@@ -1,11 +1,13 @@
 ### For common
 export PATH=$PATH:$HOME/bin:$HOME/.cargo/bin
 
-source ~/.aliases
+if [[ -f ~/.aliases ]]; then
+  . ~/.aliases
+fi
 
-### For MacOS
-### disable brew auto update
-export HOMEBREW_NO_AUTO_UPDATE=true
+if [[ -f ~/.osrc ]]; then
+  . ~/.osrc
+fi
 
 ### Tools/Plugins Env
 

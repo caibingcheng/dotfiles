@@ -145,7 +145,7 @@ function check_dotfiles() {
         return 0
     fi
 
-    do_check git clone $dotfiles $dotfiles_dir &>/dev/null && \
+    do_check git clone --depth 1 $dotfiles $dotfiles_dir &>/dev/null && \
         do_check [ -d $dotfiles_dir ] &
     check $! "download dotfiles" "download dotfiles failed"
     exit_on_fail
@@ -154,10 +154,15 @@ function check_dotfiles() {
 function check_link_match() {
     local link=$1
     local target=$2
-    local link_target=$(readlink $link)
-    if [[ "$link_target" != "$target" ]]; then
+    if [[ ! -f $link ]]; then
         return 1
     fi
+
+    local link_target=$(readlink $link)
+    if [[ "$link_target" != "$target" ]]; then
+        return 2
+    fi
+
     return 0
 }
 
@@ -166,6 +171,12 @@ function do_link() {
     local target=$2
     check_link_match $link $target &
     check $! "$link --> $target"
+
+    # link no exist
+    if [[ "$?" == "1" ]]; then
+        do_check ln -s $target $link &
+        check $! "link $link --> $target"
+    fi
     read_on_fail "replace $link with $target [y/N]?"
     if [ "$REPLY" == "y" ]; then
         do_check ln -sf $target $link &

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 do_link $HOME/.zshrc $dotfiles_dir/zsh/zshrc
 do_link $HOME/.zinit_plugins $dotfiles_dir/zsh/zinit_plugins

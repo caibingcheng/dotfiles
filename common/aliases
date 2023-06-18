@@ -38,9 +38,3 @@ alias word="wc -w"
 alias byte="wc -c"
 alias bat="bat --color=always"
 alias mmem="top -b -o +%MEM | head -n 20"
-
-# Macos
-if [[ "$(uname)" == "Darwin" ]]; then
-    alias android-emuls="$HOME/Library/Android/sdk/emulator/emulator -list-avds"
-    alias android-emuup="$HOME/Library/Android/sdk/emulator/emulator -avd"
-fi

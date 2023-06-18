@@ -1,1 +1,3 @@
 #!/bin/bash
+
+do_link $HOME/.osrc $dotfiles_dir/os/$(uname)

@@ -1,7 +1,12 @@
-source ~/.cmmrc
-alias sba="source ~/.bashrc && source ~/.cmmrc"
+#!/bin/bash
 
-if [[ -f ~/.bash_local_rc ]]; then
-    source ~/.bash_local_rc
+alias sba=". ~/.bashrc"
+
+if [[ -f ~/.cmmrc ]]; then
+    . ~/.cmmrc
 fi
 
+# specitial features
+if [[ -f ~/.bash_local_rc ]]; then
+    . ~/.bash_local_rc
+fi

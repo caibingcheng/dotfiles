@@ -1,8 +1,8 @@
 #!/bin/zsh
 
-source ~/.zshrc_alias
+source ~/.zshrc_aliases
 source ~/.zshrc_bindkeys
-if [[ -f ~/.zshrc_local_rc ]]; then 
+if [[ -f ~/.zshrc_local_rc ]]; then
     source ~/.zshrc_local_rc
 fi
 
