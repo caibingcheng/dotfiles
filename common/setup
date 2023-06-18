@@ -1,0 +1,4 @@
+#!/bin/bash
+
+do_link $HOME/.aliases $dotfiles_dir/common/aliases
+do_link $HOME/.cmmrc $dotfiles_dir/common/cmmrc
