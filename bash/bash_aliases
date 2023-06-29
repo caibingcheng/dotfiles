@@ -6,6 +6,10 @@ if [[ -f ~/.cmmrc ]]; then
     . ~/.cmmrc
 fi
 
+if [[ -f ~/.git-completion.bash ]]; then
+    . ~/.git-completion.bash
+fi
+
 # specitial features
 if [[ -f ~/.bash_local_rc ]]; then
     . ~/.bash_local_rc

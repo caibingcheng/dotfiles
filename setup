@@ -279,9 +279,16 @@ function setup_rc() {
         exit 1
     fi
     source $shell_rc
-    source $dotfiles_dir/bin/setup
-    source $dotfiles_dir/common/setup
-    source $dotfiles_dir/os/setup
+
+    dotfiles_subdirs=$(ls $dotfiles_dir)
+    for shell_env_dir in ${candidates_shell[@]}; do
+        dotfiles_subdirs=$(echo $dotfiles_subdirs | sed "s/$shell_env_dir//g")
+    done
+    for dotfiles_subdir in ${dotfiles_subdirs[@]}; do
+        if [[ -d $dotfiles_dir/$dotfiles_subdir ]]; then
+            source $dotfiles_dir/$dotfiles_subdir/setup
+        fi
+    done
 }
 
 function echo_notice() {
