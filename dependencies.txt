@@ -1,8 +1,9 @@
 ==required==
 git.git.${binstaller}
-==basic==
-autossh.autossh.${binstaller}
 cargo.cargo.${binstaller}
+==basic==
+vim.vim.${binstaller}
+autossh.autossh.${binstaller}
 exa.exa.${binstaller},cargo
 bat.bat.${binstaller},cargo
 fd-find.fd,fdfind.${binstaller},cargo

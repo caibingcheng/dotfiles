@@ -189,9 +189,13 @@ function do_install() {
     installer_name=$1
     shift
     software_name=$@
-    $installer_name install $software_name &>/dev/null
+    install_param=""
+    if [[ "$installer_name" == "apt" ]]; then
+    	install_param="-y"
+    fi
+    $installer_name install $install_param $software_name &>/dev/null
     if [[ "$?" != "0" ]]; then
-        $nsudo $installer_name install $software_name &>/dev/null
+        $nsudo $installer_name install $install_param $software_name &>/dev/null
     fi
     return $?
 }
