@@ -51,7 +51,11 @@ while [[ "$1" != "" ]]; do
 done
 
 function section() {
-    echo -e "\n\033[1;33m$1\033[0m"
+    echo -e "\n\033[1;33m==== $1 ====\033[0m"
+}
+
+function sub_setction() {
+    echo -e "\033[33m>>>> $1 <<<<\033[0m"
 }
 
 function do_check() {
@@ -99,6 +103,18 @@ function exit_on_fail() {
 function exit_on_success() {
     if [[ "$?" == "0" ]]; then
         exit 0
+    fi
+}
+
+function on_fail() {
+    if [[ "$?" != "0" ]]; then
+        $@
+    fi
+}
+
+function on_success() {
+    if [[ "$?" == "0" ]]; then
+        $@
     fi
 }
 
@@ -321,28 +337,28 @@ function prepare() {
 }
 
 function main() {
-    section "==== prepare ===="
+    section "prepare"
     prepare
 
     if [[ "$nrequired" != "" ]]; then
-        section "==== install required dependencies ===="
+        section "install required dependencies"
         install_dependencies ${dependencies_required[@]}
         check_dotfiles
     fi
 
-    section "==== setup rc ===="
+    section "setup rc"
     setup_rc $shell
 
     if [[ "$nbasic" != "" ]]; then
-        section "==== install basic dependencies ===="
+        section "install basic dependencies"
         install_dependencies ${dependencies_basic[@]}
     fi
     if [[ "$noptional" != "" ]]; then
-        section "==== install optional dependencies ===="
+        section "install optional dependencies"
         install_dependencies ${dependencies_optional[@]}
     fi
 
-    section "==== done ===="
+    section "done"
     echo_notice
 }
 

@@ -1,3 +1,4 @@
 #!/bin/bash
 
+sub_setction "os"
 do_link $HOME/.osrc $dotfiles_dir/os/$(uname)

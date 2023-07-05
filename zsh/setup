@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+sub_setction "zsh"
 do_link $HOME/.zshrc $dotfiles_dir/zsh/zshrc
 do_link $HOME/.zinit_plugins $dotfiles_dir/zsh/zinit_plugins
 do_link $HOME/.zshrc_alias $dotfiles_dir/zsh/zshrc_alias

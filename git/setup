@@ -1,3 +1,29 @@
 #!/bin/bash
 
+function git_check_user() {
+    if [[ "$(git config --global user.name)" == "" || "$(git config --global user.email)" == "" ]]; then
+        return 1
+    fi
+    return 0
+}
+
+function git_config_user() {
+    user_name=""
+    user_email=""
+    while [[ "$user_name" == "" ]]; do
+        read -p "    user.name: " user_name
+    done
+    while [[ "$user_email" == "" ]]; do
+        read -p "    user.email: " user_email
+    done
+    git config --global user.name "$user_name"
+    git config --global user.email "$user_email"
+}
+
+sub_setction "git"
+
+git_check_user &
+check $! "check git user" "git user not found"
+on_fail git_config_user
+
 do_link $HOME/.git-completion.bash $dotfiles_dir/git/git-completion.bash
