@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# choice a valid ip from ips
+ips=$@
+for ip in ${ips[@]}; do
+    ping_result=$(ping $ip -q -w1 -W1 -c1 | grep "0 received")
+    if [ -z "$ping_result" ]; then
+        echo $ip
+        break
+    fi
+done

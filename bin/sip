@@ -1,0 +1,22 @@
+#!/bin/bash
+
+target_ips=$(netstat -tpn 2>&1 | grep -E 'ESTABLISHED.*ssh' | awk -F' ' '{print $5}' | awk -F':' '{print $1}')
+target_ips=$(echo $target_ips | tr ' ' '\n' | sort | uniq)
+
+prefer_prefix=".*"
+if [[ $# -gt 0 ]]; then
+    prefer_prefix=$@
+fi
+
+macth_ips=""
+for ip in $target_ips; do
+    for prefix in $prefer_prefix; do
+        match_ip=$(echo $ip | grep -E "$prefix")
+        if [ "$match_ip" != "" ]; then
+            macth_ips="$macth_ips $match_ip"
+        fi
+    done
+done
+macth_ips=$(echo $macth_ips | tr ' ' '\n' | sort | uniq)
+
+echo $macth_ips

@@ -1,0 +1,11 @@
+#!/usr/bin/expect -f
+
+set src     [lindex $argv 0]
+set dst     [lindex $argv 1]
+set passwd  [lindex $argv 2]
+
+set timeout 10
+spawn scp $src $dst
+expect "password:"
+send "$passwd\r"
+interact

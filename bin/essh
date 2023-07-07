@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+
+set dst     [lindex $argv 0]
+set passwd  [lindex $argv 1]
+
+set timeout 10
+spawn autossh $dst
+expect "password:"
+send "$passwd\r"
+interact
