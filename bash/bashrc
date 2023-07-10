@@ -66,8 +66,7 @@ unset color_prompt force_color_prompt
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
 xterm*|rxvt*)
-    UPTIME=$(uptime | awk '{print $3}' | sed 's/,//' | xargs printf "System uptime: %s\n")
-    PS1='\[\033[01;33m\]$(git_branch)[$(date +"%a %T")] ${debian_chroot:+($debian_chroot):}\[\033[01;34m\]\w\[\033[01;33m\]\n\$\[\033[00m\] '
+    PS1='\[\033[01;33m\]$(git_branch '[' ']')[$(date +"%a %T")][$(only_uptime)] ${debian_chroot:+($debian_chroot):}\[\033[01;34m\]\w\[\033[01;33m\]\n\$\[\033[00m\] '
     ;;
 *)
     ;;

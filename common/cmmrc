@@ -35,15 +35,16 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 ### End Tools/Plugins Env
 
 ### Comm functions
-git_branch()
+function git_branch()
 {
-   branch=`git rev-parse --abbrev-ref HEAD 2>/dev/null`
-   if [ "${branch}" != "" ]
-   then
-       if [ "${branch}" = "(no branch)" ]
-       then
-           branch="(`git rev-parse --short HEAD`...)"
-       fi
-       echo "[$branch] "
-   fi
+  branch=`git rev-parse --abbrev-ref HEAD 2>/dev/null`
+  if [ "${branch}" != "" ]; then
+    if [ "${branch}" == "(no branch)" ]; then
+      branch="(`git rev-parse --short HEAD`...)"
+    fi
+    echo "${1}${branch}${2}"
+  fi
+}
+function only_uptime() {
+  echo $(uptime | awk -F',' '{print $1 $2}' | awk -F'up' '{print $2}')
 }
