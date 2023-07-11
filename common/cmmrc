@@ -46,5 +46,11 @@ function git_branch()
   fi
 }
 function only_uptime() {
-  echo $(uptime | awk -F',' '{print $1 $2}' | awk -F'up' '{print $2}')
+  echo $(uptime | awk -F',' '{ \
+    if ($2 ~ /user/) { \
+      print $1 \
+    } else { \
+      print $1 $2 \
+    } \
+  }' | awk -F'up' '{print $2}')
 }
