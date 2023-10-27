@@ -9,3 +9,4 @@ bat.bat.${binstaller},cargo
 fd-find.fd,fdfind.${binstaller},cargo
 ripgrep.rg.${binstaller},cargo
 ==optional==
+meld.meld.${binstaller}

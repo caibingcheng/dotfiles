@@ -13,6 +13,7 @@ alias gmm="git commit"
 alias gma="git commit -a"
 alias gmd="git commit --amend"
 alias gdd="git diff"
+alias gdt="git difftool"
 
 alias gits="git multi"
 alias gsb="gits branch"
