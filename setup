@@ -10,7 +10,7 @@ dotfiles_dir=$HOME/.dotfiles
 dependencies_path=$dotfiles_dir/dependencies
 dependencies_build_path=$dotfiles_dir/build.py
 dependencies_build_source_path=$dotfiles_dir/dependencies.toml
-dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/master/dependencies
+dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
 
 # need sudo
 nsudo=""
@@ -299,6 +299,7 @@ function build_dependences() {
         return 0
     fi
 
+    # only support python3
     check_command python3 &&
         if [[ "$?" == "0" ]]; then
             has_toml=$(python3 -c "import toml" 2>&1)
@@ -309,21 +310,6 @@ function build_dependences() {
             fi
 
             do_check python3 $dependencies_build_path $dependencies_build_source_path $dependencies_path &
-            check $! "build dependencies" "build dependencies failed"
-            exit_on_fail
-            # return 0
-        fi
-
-    check_command python &&
-        if [[ "$?" == "0" ]]; then
-            has_toml=$(python -c "import toml" 2>&1)
-            if [[ "${has_toml}" != "" ]]; then
-                do_check python -m pip install toml &
-                check $! "install pip module 'toml'" "install pip module 'toml' failed"
-                exit_on_fail
-            fi
-
-            do_check python $dependencies_build_path $dependencies_build_source_path $dependencies_path &
             check $! "build dependencies" "build dependencies failed"
             exit_on_fail
             return 0
