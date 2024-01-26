@@ -20,6 +20,9 @@ nrequired=required
 nbasic=basic
 # need optional, it optional
 noptional=""
+# need update, update dotfiles
+nupdate=""
+
 if [[ "$shell" == "" ]]; then
     shell=$(echo $SHELL | awk -F'/' '{print $NF}')
 fi
@@ -28,6 +31,9 @@ while [[ "$1" != "" ]]; do
     case $1 in
     sudo)
         nsudo=sudo
+        ;;
+    update)
+        nupdate=update
         ;;
     --basic)
         nbasic=basic
@@ -171,6 +177,10 @@ function check_dotfiles() {
     do_check [ -d $dotfiles_dir ] &
     check $! "check dotfiles" "dotfiles not found"
     if [[ "$?" == "0" ]]; then
+        if [[ "$nupdate" != "" ]]; then
+            do_check git -C $dotfiles_dir pull &
+            check $! "update dotfiles" "update dotfiles failed"
+        fi
         return 0
     fi
 
