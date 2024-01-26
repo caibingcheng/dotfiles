@@ -1,4 +1,5 @@
 alias crc="code ~/.dotfiles"
+alias dotfiles="$HOME/.dotfiles/setup"
 
 alias ssh="autossh"
 alias ntpon="timedatectl set-ntp yes"
