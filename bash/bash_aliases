@@ -10,7 +10,18 @@ if [[ -f ~/.git-completion.bash ]]; then
     . ~/.git-completion.bash
 fi
 
+if [[ -f ~/.osrc ]]; then
+    . ~/.osrc
+fi
+
 # specitial features
 if [[ -f ~/.bash_local_rc ]]; then
     . ~/.bash_local_rc
 fi
+
+function freebuffcache() {
+    sync &&
+    sudo sh -c "echo 1 > /proc/sys/vm/drop_caches"
+    sudo sh -c "echo 2 > /proc/sys/vm/drop_caches"
+    sudo sh -c "echo 3 > /proc/sys/vm/drop_caches"
+}
