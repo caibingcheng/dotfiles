@@ -7,11 +7,10 @@ candidates_shell=(zsh bash)
 candidates_installer=(apt brew)
 dotfiles=https://github.com/caibingcheng/dotfiles.git
 dotfiles_dir=$HOME/.dotfiles
-dependencies_path=$dotfiles_dir/dependencies.txt
-dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/master/dependencies.txt
-dependencies_required=()
-dependencies_basic=()
-dependencies_optional=()
+dependencies_path=$dotfiles_dir/dependencies
+dependencies_build_path=$dotfiles_dir/build.py
+dependencies_build_source_path=$dotfiles_dir/dependencies.toml
+dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
 
 # need sudo
 nsudo=""
@@ -27,25 +26,25 @@ fi
 shift
 while [[ "$1" != "" ]]; do
     case $1 in
-        sudo)
-            nsudo=sudo
-            ;;
-        --basic)
-            nbasic=basic
-            ;;
-        --no-basic)
-            nbasic=""
-            ;;
-        --required)
-            nrequired=required
-            ;;
-        --optional)
-            noptional=optional
-            ;;
-        *)
-            echo "unknown argument: $1"
-            exit 1
-            ;;
+    sudo)
+        nsudo=sudo
+        ;;
+    --basic)
+        nbasic=basic
+        ;;
+    --no-basic)
+        nbasic=""
+        ;;
+    --required)
+        nrequired=required
+        ;;
+    --optional)
+        noptional=optional
+        ;;
+    *)
+        echo "unknown argument: $1"
+        exit 1
+        ;;
     esac
     shift
 done
@@ -81,15 +80,16 @@ function check() {
     failed_message=$3
     echo -n "    $message ... "
 
-    spin () {
+    spin() {
         spins='-\|/'
         while :; do
-            i=$(( (i+1) % 4 ))
+            i=$(((i + 1) % 4))
             echo -ne "\r[${spins:$i:1}]"
             sleep .1
         done
     }
-    spin & spin_pid=$!
+    spin &
+    spin_pid=$!
     wait $foo_pid &>/dev/null
     result=$?
     kill $spin_pid &>/dev/null
@@ -174,8 +174,7 @@ function check_dotfiles() {
         return 0
     fi
 
-    do_check git clone --depth 1 $dotfiles $dotfiles_dir &>/dev/null && \
-        do_check [ -d $dotfiles_dir ] &
+    do_check git clone --depth ss1 $dotfiles $dotfiles_dir &>/dev/null && do_check [ -d $dotfiles_dir ] &
     check $! "download dotfiles" "download dotfiles failed"
     exit_on_fail
 }
@@ -220,7 +219,7 @@ function do_install() {
     software_name=$@
     install_param=""
     if [[ "$installer_name" == "apt" ]]; then
-    	install_param="-y"
+        install_param="-y"
     fi
     $installer_name install $install_param $software_name &>/dev/null
     if [[ "$?" != "0" ]]; then
@@ -254,47 +253,6 @@ function install_with() {
             fi
         done
     done
-}
-
-function extract_dependencies() {
-    dependencies=""
-    if [[ -f $dependencies_path ]]; then
-        dependencies=$(cat $dependencies_path)
-    else
-        dependencies=$(curl -s $dependencies_url)
-    fi
-    dependencies=$(echo $dependencies | sed "s/\${binstaller}/$binstaller/g")
-
-    current_dependencies_type=""
-    for dependency in ${dependencies[@]}; do
-        if [[ "$dependency" == "" ]]; then
-            continue
-        fi
-
-        if [[ "$dependency" == "==required==" ]]; then
-            current_dependencies_type="required"
-            continue
-        elif [[ "$dependency" == "==optional==" ]]; then
-            current_dependencies_type="optional"
-            continue
-        elif [[ "$dependency" == "==basic==" ]]; then
-            current_dependencies_type="basic"
-            continue
-        fi
-
-        if [[ "$current_dependencies_type" == "required" ]]; then
-            dependencies_required+=($dependency)
-        elif [[ "$current_dependencies_type" == "optional" ]]; then
-            dependencies_optional+=($dependency)
-        elif [[ "$current_dependencies_type" == "basic" ]]; then
-            dependencies_basic+=($dependency)
-        fi
-    done
-
-    # remove duplicate
-    dependencies_required=($(echo ${dependencies_required[@]} | tr ' ' '\n' | sort -u | tr '\n' ' '))
-    dependencies_optional=($(echo ${dependencies_optional[@]} | tr ' ' '\n' | sort -u | tr '\n' ' '))
-    dependencies_basic=($(echo ${dependencies_basic[@]} | tr ' ' '\n' | sort -u | tr '\n' ' '))
 }
 
 function install_dependencies() {
@@ -333,6 +291,31 @@ function echo_notice() {
     fi
 }
 
+function build_dependences() {
+    if [[ ! -f $dependencies_build_path ]]; then
+        return 0
+    fi
+    if [[ ! -f $dependencies_build_source_path ]]; then
+        return 0
+    fi
+
+    # only support python3
+    check_command python3 &&
+        if [[ "$?" == "0" ]]; then
+            has_toml=$(python3 -c "import toml" 2>&1)
+            if [[ "${has_toml}" != "" ]]; then
+                do_check python3 -m pip install toml &
+                check $! "install pip module 'toml'" "install pip module 'toml' failed"
+                exit_on_fail
+            fi
+
+            do_check python3 $dependencies_build_path $dependencies_build_source_path $dependencies_path &
+            check $! "build dependencies" "build dependencies failed"
+            exit_on_fail
+            return 0
+        fi
+}
+
 function prepare() {
     if [[ "$nsudo" == "sudo" ]]; then
         sudo /bin/ls &>/dev/null
@@ -346,7 +329,16 @@ function prepare() {
     check $! "check installer" "unknown installer"
     exit_on_fail
 
-    extract_dependencies
+    build_dependences
+
+    if [[ -f $dependencies_path ]]; then
+        source $dependencies_path
+    else
+        do_check curl -s $dependencies_url -o /tmp/dependencies.toml &
+        check $! "download dependencies" "download dependencies failed"
+        exit_on_fail
+        source /tmp/dependencies.toml
+    fi
 }
 
 function main() {

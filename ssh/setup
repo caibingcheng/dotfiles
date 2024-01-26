@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sub_setction "ssh"
+do_check [ -d "$HOME/.ssh" ] || mkdir -p "$HOME/.ssh" &
+check $! "check ssh" "ssh not found"
+
+do_link $HOME/.ssh/config $dotfiles_dir/ssh/config
