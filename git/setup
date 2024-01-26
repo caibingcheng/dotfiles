@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mode=$1
+
 function git_check_user() {
     if [[ "$(git config --global user.name)" == "" || "$(git config --global user.email)" == "" ]]; then
         return 1
@@ -10,6 +12,10 @@ function git_check_user() {
 function git_config_user() {
     user_name=""
     user_email=""
+    if [[ "$mode" == "test" ]]; then
+        user_name="test"
+        user_email="abc@test.com"
+    fi
     while [[ "$user_name" == "" ]]; do
         read -p "    user.name: " user_name
     done
