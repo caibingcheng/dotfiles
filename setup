@@ -7,11 +7,12 @@ candidates_shell=(zsh bash)
 candidates_installer=(apt brew)
 dotfiles=https://github.com/caibingcheng/dotfiles.git
 dotfiles_dir=$HOME/.dotfiles
-dependencies_path=$dotfiles_dir/dependencies
-dependencies_build_path=$dotfiles_dir/build.py
-dependencies_build_source_path=$dotfiles_dir/dependencies.toml
-dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
+dependencies_path=""
+dependencies_build_path=""
+dependencies_build_source_path=""
+dependencies_url=""
 
+mode="normal"
 # need sudo
 nsudo=""
 # need required, it is must
@@ -28,6 +29,9 @@ while [[ "$1" != "" ]]; do
     case $1 in
     sudo)
         nsudo=sudo
+        ;;
+    --test)
+        mode="test"
         ;;
     --basic)
         nbasic=basic
@@ -48,6 +52,16 @@ while [[ "$1" != "" ]]; do
     esac
     shift
 done
+
+if [[ "$mode" == "test" ]]; then
+    dotfiles_dir=$(pwd)
+    echo "test mode, dotfiles_dir: $dotfiles_dir"
+fi
+
+dependencies_path=$dotfiles_dir/dependencies
+dependencies_build_path=$dotfiles_dir/build.py
+dependencies_build_source_path=$dotfiles_dir/dependencies.toml
+dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
 
 function print_help() {
     echo "Usage: $0 [shell] [options]"
@@ -88,12 +102,20 @@ function check() {
             sleep .1
         done
     }
-    spin &
-    spin_pid=$!
+
+    if [[ "$mode" != "test" ]]; then
+        spin &
+        spin_pid=$!
+    fi
+
     wait $foo_pid &>/dev/null
     result=$?
-    kill $spin_pid &>/dev/null
-    wait $spin_pid &>/dev/null
+
+    if [[ "$mode" != "test" ]]; then
+        kill $spin_pid &>/dev/null
+        wait $spin_pid &>/dev/null
+    fi
+
     if [[ "$result" == "0" ]]; then
         echo -e "\r\033[1;32m[√]\033[0m"
         return 0
@@ -277,7 +299,7 @@ function setup_rc() {
     done
     for dotfiles_subdir in ${dotfiles_subdirs[@]}; do
         if [[ -d $dotfiles_dir/$dotfiles_subdir ]]; then
-            source $dotfiles_dir/$dotfiles_subdir/setup
+            source $dotfiles_dir/$dotfiles_subdir/setup $mode
         fi
     done
 }

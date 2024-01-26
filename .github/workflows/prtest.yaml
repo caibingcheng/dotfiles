@@ -1,0 +1,18 @@
+name: PR Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: setup test
+        run: ./setup bash --test | tee setup.log
+
+      - name: check result
+        run: cat setup.log && grep -q "==== done ====" setup.log || kill -9 1
