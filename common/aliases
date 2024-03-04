@@ -29,7 +29,7 @@ else
     alias ls="/bin/ls"
 fi
 if [[ "$(command -v fdfind)" != "" ]]; then
-    alias fd="fdfind"
+    alias fd="fdfind -I"
 fi
 alias ll="ls -lh"
 alias la="ls -lha"
