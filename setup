@@ -184,7 +184,7 @@ function check_dotfiles() {
         return 0
     fi
 
-    do_check git clone --depth ss1 $dotfiles $dotfiles_dir &>/dev/null && do_check [ -d $dotfiles_dir ] &
+    do_check git clone --depth=1 $dotfiles $dotfiles_dir &>/dev/null && do_check [ -d $dotfiles_dir ] &
     check $! "download dotfiles" "download dotfiles failed"
     exit_on_fail
 }
