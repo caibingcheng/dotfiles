@@ -1,0 +1,59 @@
+
+#!/bin/bash
+
+# A script to perform incremental backups using rsync
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# must need 2 arguments
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <source_dir> <backup_dir>"
+  exit 1
+fi
+
+# check if source directory exists
+if [ ! -d "$1" ]; then
+  echo "Source directory does not exist"
+  exit 1
+fi
+
+readonly SOURCE_DIR="$1"
+readonly BACKUP_DIR="$2"
+readonly DATETIME="$(date '+%Y-%m-%d_%H:%M:%S')"
+readonly BACKUP_PATH="${BACKUP_DIR}/${DATETIME}"
+readonly LATEST_LINK="${BACKUP_DIR}/latest"
+
+user_input() {
+  local response
+  read -r -p "$1 [y/n] " response
+  case "$response" in
+    [yY][eE][sS]|[yY])
+      true
+      ;;
+    *)
+      false
+      ;;
+  esac
+}
+
+echo "Source directory: ${SOURCE_DIR}"
+echo "Backup directory: ${BACKUP_DIR}"
+if user_input "Do you want to continue?"; then
+  echo "Backing up ${SOURCE_DIR} to ${BACKUP_PATH}"
+else
+  echo "Backup cancelled!"
+  exit 1
+fi
+
+mkdir -p "${BACKUP_DIR}"
+
+rsync -av --delete \
+  "${SOURCE_DIR}/" \
+  --link-dest "${LATEST_LINK}" \
+  --exclude=".cache" \
+  "${BACKUP_PATH}"
+
+rm -rf "${LATEST_LINK}"
+ln -s "${BACKUP_PATH}" "${LATEST_LINK}"

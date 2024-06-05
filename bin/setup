@@ -9,3 +9,4 @@ do_link $HOME/bin/sip $dotfiles_dir/bin/sip
 do_link $HOME/bin/cip $dotfiles_dir/bin/cip
 do_link $HOME/bin/essh $dotfiles_dir/bin/essh
 do_link $HOME/bin/escp $dotfiles_dir/bin/escp
+do_link $HOME/bin/backup $dotfiles_dir/bin/backup
