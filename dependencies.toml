@@ -1,9 +1,18 @@
 [required]
+[required.curl]
+alt="curl"
+installer="default"
+[required.wget]
+alt="wget"
+installer="default"
 [required.git]
 alt="git"
 installer="default"
 [required.cargo]
 alt="cargo"
+installer="default"
+[required.python3-pip]
+alt="pip3"
 installer="default"
 
 [basic]
@@ -25,6 +34,24 @@ installer=["default","cargo"]
 [basic.ripgrep]
 alt="rg"
 installer=["default","cargo"]
+[basic.zoxide]
+alt="zoxide"
+installer="cargo"
+[basic.thefuck]
+alt="thefuck"
+installer="pip3"
+options="--user"
+[basic.tlrc]
+alt="tldr"
+installer="cargo"
+[basic.ranger-fm]
+alt="ranger"
+installer="pip3"
+options="--user"
+[basic.gitui]
+alt="gitui"
+installer="cargo"
+options="--locked"
 
 [optional]
 [optional.meld]

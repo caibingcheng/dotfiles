@@ -11,6 +11,7 @@ dependencies_path=$dotfiles_dir/dependencies
 dependencies_build_path=$dotfiles_dir/build.py
 dependencies_build_source_path=$dotfiles_dir/dependencies.toml
 dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
+valid_shell=(zsh bash sh ksh csh tcsh fish dash yash) # I have not tested all of them
 
 # need sudo
 nsudo=""
@@ -23,10 +24,17 @@ noptional=""
 # need update, update dotfiles
 nupdate=""
 
-if [[ "$shell" == "" ]]; then
+is_valid=0
+for valid in ${valid_shell[@]}; do
+    if [[ "$shell" == "$valid" ]]; then
+        shift
+        is_valid=1
+        break
+    fi
+done
+if [[ "$shell" == "" || "$is_valid" == "0" ]]; then
     shell=$(echo $SHELL | awk -F'/' '{print $NF}')
 fi
-shift
 while [[ "$1" != "" ]]; do
     case $1 in
     sudo)
@@ -242,6 +250,7 @@ function install_with() {
     softwares=$(echo $1 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
     commands=$(echo $2 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
     installers=$(echo $3 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
+    installer_options=$(echo $4 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
 
     # temp env
     if [[ "$(echo $PATH | grep $HOME/.cargo/bin)" == "" ]]; then
@@ -258,8 +267,8 @@ function install_with() {
     for software_name in ${softwares[@]}; do
         for installer_name in ${installers[@]}; do
             if [[ "$(command -v ${installer_name})" != "" ]]; then
-                do_install $installer_name $software_name &
-                check $! "install $software_name with $installer_name" "install $software_name with $installer_name failed"
+                do_install $installer_name $software_name $installer_options &
+                check $! "install $software_name with $installer_name $installer_options" "install $software_name with $installer_name $installer_options failed"
             fi
         done
     done
@@ -268,7 +277,7 @@ function install_with() {
 function install_dependencies() {
     local dependencies=$@
     for dependency in ${dependencies[@]}; do
-        params=$(echo $dependency | awk -F'.' '{print $1" "$2" "$3}')
+        params=$(echo $dependency | awk -F'.' '{print $1" "$2" "$3" "$4}')
         install_with $params
     done
 }

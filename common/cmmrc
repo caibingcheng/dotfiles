@@ -32,6 +32,10 @@ export FZF_CTRL_T_OPTS=$FZF_DEFAULT_OPTS
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 ### bat end
 
+### thefuck
+eval $(thefuck --alias ff)
+### thefuck end
+
 ### End Tools/Plugins Env
 
 ### Comm functions

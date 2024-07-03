@@ -12,6 +12,9 @@ def install_dependencies(section, tools):
         tool_name = tool
         tool_alternative_name = tools[tool]["alt"]
         tool_installer = tools[tool]["installer"]
+        tool_installer_options = (
+            tools[tool]["options"] if "options" in tools[tool] else ""
+        )
 
         tool_name = tool_name if isinstance(tool_name, list) else [tool_name]
         tool_alternative_name = (
@@ -26,11 +29,13 @@ def install_dependencies(section, tools):
             installer if installer != "default" else "${binstaller}"
             for installer in tool_installer
         ]
+        tool_installer_options = tool_installer_options.split(" ")
 
         tool_name_bash_string = ",".join(tool_name)
         tool_alternative_name_bash_string = ",".join(tool_alternative_name)
         tool_installer_bash_string = ",".join(tool_installer)
-        install_list += f"{tool_name_bash_string}.{tool_alternative_name_bash_string}.{tool_installer_bash_string} "
+        tool_installer_options_bash_string = ",".join(tool_installer_options)
+        install_list += f"{tool_name_bash_string}.{tool_alternative_name_bash_string}.{tool_installer_bash_string}.{tool_installer_options_bash_string} "
     install_list = install_list[:-1]
     install_list += ")\n"
     return install_list

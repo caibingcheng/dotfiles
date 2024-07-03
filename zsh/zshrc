@@ -23,3 +23,5 @@ source ~/.zinit_plugins
 ### End of Zinit's installer chunk
 
 source ~/.cmmrc
+
+eval "$(zoxide init zsh)"

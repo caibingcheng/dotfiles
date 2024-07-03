@@ -1,4 +1,4 @@
-alias crc="code ~/.dotfiles"
+alias crc="vim ~/.dotfiles"
 alias dotfiles="$HOME/.dotfiles/setup"
 
 alias ssh="autossh"
@@ -15,6 +15,7 @@ alias gma="git commit -a"
 alias gmd="git commit --amend"
 alias gdd="git diff"
 alias gdt="git difftool"
+alias gpl="git pull"
 
 alias gits="git multi"
 alias gsb="gits branch"
@@ -41,3 +42,8 @@ alias byte="wc -c"
 alias bat="bat --color=always"
 alias mmem="top -b -o +%MEM | head -n 20"
 alias mm="make -j$(nproc)"
+
+alias tt="tldr"
+alias rr="ranger"
+# ff is alias for thefuck
+alias gg="gitui"
