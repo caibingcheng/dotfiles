@@ -9,7 +9,7 @@ dotfiles=https://github.com/caibingcheng/dotfiles.git
 dotfiles_dir=$HOME/.dotfiles
 dependencies_path=$dotfiles_dir/dependencies
 dependencies_build_path=$dotfiles_dir/build.py
-dependencies_build_source_path=$dotfiles_dir/dependencies.toml
+dependencies_build_source_path=$dotfiles_dir/dependencies.txt
 dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
 valid_shell=(zsh bash sh ksh csh tcsh fish dash yash) # I have not tested all of them
 
@@ -117,6 +117,12 @@ function check() {
             echo "    $failed_message"
         fi
         return 1
+    fi
+}
+
+function exist_on_fail_no_help() {
+    if [[ "$?" != "0" ]]; then
+        exit 1
     fi
 }
 
@@ -239,9 +245,9 @@ function do_install() {
     if [[ "$installer_name" == "apt" ]]; then
         install_param="-y"
     fi
-    $installer_name install $install_param $software_name &>/dev/null
+    $installer_name $software_name $install_param &>/dev/null
     if [[ "$?" != "0" ]]; then
-        $nsudo $installer_name install $install_param $software_name &>/dev/null
+        $nsudo $installer_name $software_name $install_param &>/dev/null
     fi
     return $?
 }
@@ -251,11 +257,6 @@ function install_with() {
     commands=$(echo $2 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
     installers=$(echo $3 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
     installer_options=$(echo $4 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
-
-    # temp env
-    if [[ "$(echo $PATH | grep $HOME/.cargo/bin)" == "" ]]; then
-        export PATH=$PATH:$HOME/.cargo/bin
-    fi
 
     check_command $commands &
     check $! "check $softwares" "$softwares not found"
@@ -267,8 +268,8 @@ function install_with() {
     for software_name in ${softwares[@]}; do
         for installer_name in ${installers[@]}; do
             if [[ "$(command -v ${installer_name})" != "" ]]; then
-                do_install $installer_name $software_name $installer_options &
-                check $! "install $software_name with $installer_name $installer_options" "install $software_name with $installer_name $installer_options failed"
+                do_install $installer_name $software_name $inop &
+                check $! "install $software_name with $installer_name" "install $software_name with $installer_name failed"
             fi
         done
     done
@@ -283,13 +284,6 @@ function install_dependencies() {
 }
 
 function setup_rc() {
-    shell_rc=$dotfiles_dir/$1/setup
-    if [[ ! -f $shell_rc ]]; then
-        echo "shell rc file not found: $shell_rc"
-        exit 1
-    fi
-    source $shell_rc
-
     dotfiles_subdirs=$(ls $dotfiles_dir)
     for shell_env_dir in ${candidates_shell[@]}; do
         dotfiles_subdirs=$(echo $dotfiles_subdirs | sed "s/$shell_env_dir//g")
@@ -299,6 +293,13 @@ function setup_rc() {
             source $dotfiles_dir/$dotfiles_subdir/setup
         fi
     done
+
+    shell_rc=$dotfiles_dir/$1/setup
+    if [[ ! -f $shell_rc ]]; then
+        echo "shell rc file not found: $shell_rc"
+        exit 1
+    fi
+    source $shell_rc
 }
 
 function echo_notice() {
@@ -321,13 +322,6 @@ function build_dependences() {
     # only support python3
     check_command python3 &&
         if [[ "$?" == "0" ]]; then
-            has_toml=$(python3 -c "import toml" 2>&1)
-            if [[ "${has_toml}" != "" ]]; then
-                do_check python3 -m pip install toml &
-                check $! "install pip module 'toml'" "install pip module 'toml' failed"
-                exit_on_fail
-            fi
-
             do_check python3 $dependencies_build_path $dependencies_build_source_path $dependencies_path &
             check $! "build dependencies" "build dependencies failed"
             exit_on_fail
@@ -348,40 +342,61 @@ function prepare() {
     check $! "check installer" "unknown installer"
     exit_on_fail
 
+    # if apt not update, update it
+    if [[ "$binstaller" == "apt" ]]; then
+        do_install apt update &
+        check $! "update apt" "update apt failed"
+    fi
+
+    # add cargo to PATH first
+    if [[ "$(echo $PATH | grep $HOME/.cargo/bin)" == "" ]]; then
+        export PATH=$PATH:$HOME/.cargo/bin
+    fi
+
     build_dependences
 
     if [[ -f $dependencies_path ]]; then
-        source $dependencies_path
+        source $dependencies_path $nsudu $binstaller
     else
-        do_check curl -s $dependencies_url -o /tmp/dependencies.toml &
+        do_check curl -s $dependencies_url -o /tmp/dependencies &
         check $! "download dependencies" "download dependencies failed"
         exit_on_fail
-        source /tmp/dependencies.toml
+        source /tmp/dependencies $nsudu $binstaller
     fi
 }
 
 function main() {
+    echo "shell: $shell"
+    echo "binstaller: $binstaller"
     section "prepare"
     prepare
 
     if [[ "$nrequired" != "" ]]; then
         section "install required dependencies"
-        install_dependencies ${dependencies_required[@]}
+        dependencies_required_install
         check_dotfiles
     fi
 
+    test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+    test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    eval "$(brew --prefix)/bin/brew shellenv"
+
     if [[ "$nbasic" != "" ]]; then
         section "install basic dependencies"
-        install_dependencies ${dependencies_basic[@]}
+        dependencies_basic_install
     fi
     if [[ "$noptional" != "" ]]; then
         section "install optional dependencies"
-        install_dependencies ${dependencies_optional[@]}
+        dependencies_optional_install
     fi
 
     section "setup rc"
     setup_rc $shell
     section "done"
+
+    if [[ $dependencies_failed_count -gt 0 ]]; then
+        echo "$dependencies_failed_count dependences failed"
+    fi
     echo_notice
 }
 

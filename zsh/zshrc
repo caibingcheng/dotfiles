@@ -24,4 +24,6 @@ source ~/.zinit_plugins
 
 source ~/.cmmrc
 
-eval "$(zoxide init zsh)"
+test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+eval "$(brew --prefix)/bin/brew shellenv"

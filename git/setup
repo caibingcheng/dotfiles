@@ -28,9 +28,13 @@ function git_config_slient() {
 
 sub_setction "git"
 
-git_check_user &
-check $! "check git user" "git user not found"
-on_fail git_config_user
+check_command git &
+check $! "check git" "git not found"
+if [[ "$?" == "0" ]]; then
+    git_check_user &
+    check $! "check git user" "git user not found"
+    on_fail git_config_user
 
-git_config_slient
-do_link $HOME/.git-completion.bash $dotfiles_dir/git/git-completion.bash
+    git_config_slient
+    do_link $HOME/.git-completion.bash $dotfiles_dir/git/git-completion.bash
+fi

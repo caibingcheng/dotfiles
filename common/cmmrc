@@ -11,12 +11,13 @@ fi
 
 ### Tools/Plugins Env
 
+SHELL_TYPE=$(ps -x | grep $$)
+
 ### fzf
 if [[ ! -d ~/.fzf ]]; then
   git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
   ~/.fzf/install --all --no-update-rc
 fi
-SHELL_TYPE=$(ps -x | grep $$)
 if [[ "$(echo $SHELL_TYPE | grep zsh)" != "" ]]; then
   source ~/.fzf.zsh
 else
@@ -33,8 +34,20 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 ### bat end
 
 ### thefuck
-eval $(thefuck --alias ff)
+if [[ "$(command -v thefuck)" != "" ]]; then
+  eval $(thefuck --alias ff)
+fi
 ### thefuck end
+
+### z
+if [[ "$command -v zoxide" != "" ]]; then
+  if [[ "$(echo $SHELL_TYPE | grep zsh)" != "" ]]; then
+    eval "$(zoxide init zsh)"
+  else
+    eval "$(zoxide init bash)"
+  fi
+fi
+### z end
 
 ### End Tools/Plugins Env
 

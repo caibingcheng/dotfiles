@@ -3,3 +3,6 @@
 sub_setction "bash"
 do_link $HOME/.bashrc $dotfiles_dir/bash/bashrc
 do_link $HOME/.bash_aliases $dotfiles_dir/bash/bash_aliases
+
+do_check source $HOME/.bashrc &
+check $! "source bashrc" "source bashrc failed"

@@ -116,5 +116,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-eval "$(zoxide init bash)"
-
+test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+eval "$(brew --prefix)/bin/brew shellenv"
