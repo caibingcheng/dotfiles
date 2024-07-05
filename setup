@@ -245,42 +245,8 @@ function do_install() {
     if [[ "$installer_name" == "apt" ]]; then
         install_param="-y"
     fi
-    $installer_name $software_name $install_param &>/dev/null
-    if [[ "$?" != "0" ]]; then
-        $nsudo $installer_name $software_name $install_param &>/dev/null
-    fi
+    $installer_name $software_name $install_param || (test "$?" != "0" && $nsudo $installer_name $software_name $install_param)
     return $?
-}
-
-function install_with() {
-    softwares=$(echo $1 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
-    commands=$(echo $2 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
-    installers=$(echo $3 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
-    installer_options=$(echo $4 | awk -F',' '{for(i=1;i<=NF;i++){print $i}}')
-
-    check_command $commands &
-    check $! "check $softwares" "$softwares not found"
-    if [[ "$?" == "0" ]]; then
-        return 0
-    fi
-
-    # install software
-    for software_name in ${softwares[@]}; do
-        for installer_name in ${installers[@]}; do
-            if [[ "$(command -v ${installer_name})" != "" ]]; then
-                do_install $installer_name $software_name $inop &
-                check $! "install $software_name with $installer_name" "install $software_name with $installer_name failed"
-            fi
-        done
-    done
-}
-
-function install_dependencies() {
-    local dependencies=$@
-    for dependency in ${dependencies[@]}; do
-        params=$(echo $dependency | awk -F'.' '{print $1" "$2" "$3" "$4}')
-        install_with $params
-    done
 }
 
 function setup_rc() {
@@ -309,6 +275,7 @@ function echo_notice() {
     if [[ "$shell" == "zsh" ]]; then
         echo "run 'source $HOME/.zshrc' to enable config"
     fi
+    echo "and then reboot your machine"
 }
 
 function build_dependences() {
@@ -356,12 +323,12 @@ function prepare() {
     build_dependences
 
     if [[ -f $dependencies_path ]]; then
-        source $dependencies_path $nsudu $binstaller
+        source $dependencies_path "$nsudo" "$binstaller"
     else
         do_check curl -s $dependencies_url -o /tmp/dependencies &
         check $! "download dependencies" "download dependencies failed"
         exit_on_fail
-        source /tmp/dependencies $nsudu $binstaller
+        source /tmp/dependencies "$nsudo" "$binstaller"
     fi
 }
 

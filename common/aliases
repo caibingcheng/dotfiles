@@ -1,4 +1,4 @@
-alias crc="vim ~/.dotfiles"
+alias crc="test -f "$(command -v code)" && code ~/.dotfiles || vim ~/.dotfiles"
 alias dotfiles="$HOME/.dotfiles/setup"
 
 alias ssh="autossh"
@@ -16,6 +16,8 @@ alias gmd="git commit --amend"
 alias gdd="git diff"
 alias gdt="git difftool"
 alias gpl="git pull"
+alias gsu="git submodule update --init"
+alias gcf="git clean -fd"
 
 alias gits="git multi"
 alias gsb="gits branch"
@@ -47,3 +49,5 @@ alias tt="tldr"
 alias rr="ranger"
 # ff is alias for thefuck
 alias gg="gitui"
+
+test -f "$(command -v batcat)" && alias bat="batcat"

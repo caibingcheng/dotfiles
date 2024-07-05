@@ -21,10 +21,11 @@ cargo ?? @@ install cargo
 brew ?? special_install_brew
 
 [basic]
+preload ?? @@ install preload
 vim ?? @@ install vim
 autossh ?? @@ install autossh
 exa ?? @@ install exa || brew install exa || cargo install exa --locked
-bat ?? @@ install bat || brew install bat || cargo install bat --locked
+bat||batcat ?? @@ install bat || brew install bat || cargo install bat --locked
 fd||fdfind ?? @@ install fd || @@ install fd-find || brew install fd || cargo install fd-find --locked
 rg ?? @@ install ripgrep || brew install ripgrep
 zoxide ?? brew install zoxide
