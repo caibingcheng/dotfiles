@@ -11,6 +11,7 @@ dependencies_path=$dotfiles_dir/dependencies
 dependencies_build_path=$dotfiles_dir/build.py
 dependencies_build_source_path=$dotfiles_dir/dependencies.txt
 dependencies_url=https://raw.githubusercontent.com/caibingcheng/dotfiles/main/dependencies
+github_hosts_url=https://cdn.jsdelivr.net/gh/caibingcheng/hosts@main/dns/github
 valid_shell=(zsh bash sh ksh csh tcsh fish dash yash) # I have not tested all of them
 
 # need sudo
@@ -296,10 +297,25 @@ function build_dependences() {
         fi
 }
 
+function update_host() {
+    do_check curl -s $github_hosts_url -o /tmp/hosts &
+    check $! "update github hosts" "update github hosts failed"
+    exit_on_fail
+
+    hosts_key_start="########## HOST github START"
+    hosts_key_end="########## HOST github END"
+    do_check $nsudo sed -i "/$hosts_key_start.*$hosts_key_end/d" /etc/hosts &
+    check $! "remove dotfiles hosts"
+    do_check $nsudo bash -c "cat /tmp/hosts >>/etc/hosts" &
+    check $! "update hosts" "update hosts failed"
+}
+
 function prepare() {
     if [[ "$nsudo" == "sudo" ]]; then
         sudo /bin/ls &>/dev/null
     fi
+
+    update_host
 
     check_target &
     check $! "check $shell" "unknown shell: $shell"
