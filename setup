@@ -123,6 +123,9 @@ function check() {
 
 function exist_on_fail_no_help() {
     if [[ "$?" != "0" ]]; then
+        if [[ "$1" != "" ]]; then
+            echo "$1"
+        fi
         exit 1
     fi
 }
@@ -246,7 +249,7 @@ function do_install() {
     if [[ "$installer_name" == "apt" ]]; then
         install_param="-y"
     fi
-    $installer_name $software_name $install_param || (test "$?" != "0" && $nsudo $installer_name $software_name $install_param)
+    $nsudo $installer_name $software_name $install_param &>/dev/null
     return $?
 }
 
@@ -298,16 +301,18 @@ function build_dependences() {
 }
 
 function update_host() {
-    do_check curl -s $github_hosts_url -o /tmp/hosts &
+    test -f /tmp/hosts || do_check curl -s $github_hosts_url -o /tmp/hosts &
     check $! "update github hosts" "update github hosts failed"
-    exit_on_fail
+    exist_on_fail_no_help
 
-    hosts_key_start="########## HOST github START"
-    hosts_key_end="########## HOST github END"
-    do_check $nsudo sed -i "/$hosts_key_start.*$hosts_key_end/d" /etc/hosts &
-    check $! "remove dotfiles hosts"
-    do_check $nsudo bash -c "cat /tmp/hosts >>/etc/hosts" &
+    # workaroud
+    $nsudo cp /etc/hosts /tmp/hosts_tmp &>/dev/null
+    $nsudo sed -i '/github/d' /tmp/hosts_tmp &>/dev/null
+    $nsudo bash -c "cat /tmp/hosts >> /tmp/hosts_tmp" &>/dev/null
+
+    do_check $nsudo mv /tmp/hosts_tmp /etc/hosts &
     check $! "update hosts" "update hosts failed"
+    exist_on_fail_no_help "super admin permission required"
 }
 
 function prepare() {
@@ -351,6 +356,7 @@ function prepare() {
 function main() {
     echo "shell: $shell"
     echo "binstaller: $binstaller"
+    echo "nsudo: \"$nsudo\""
     section "prepare"
     prepare
 
