@@ -1,0 +1,73 @@
+#!/bin/bash
+
+current_dir=$(pwd)
+valid_install_level=(minimal standard)
+config_install_level=standard
+if [[ ! -z $1 ]]; then
+    if [[ " ${valid_install_level[@]} " =~ " $1 " ]]; then
+        config_install_level=$1
+    else
+        echo "Invalid install level: $1"
+        echo "Valid install levels: ${valid_install_level[@]}"
+        exit 1
+    fi
+fi
+echo "Install level: $config_install_level"
+
+# check if dotfiles exists
+if [[ ! -d ${HOME}/.dotfiles ]]; then
+    git clone https://github.com/caibingcheng/dotfiles.git ${HOME}/.dotfiles || exit 1
+    cd ${HOME}/.dotfiles && current_dir=$(pwd) || exit 1
+fi
+export DOTFILES_ROOT=$current_dir
+export NIXPKGS_ALLOW_UNFREE=1
+
+# check super user privileges
+export SUDO=$(command -v sudo)
+
+# update apt source
+if [[ ! -f /etc/apt/sources.list.bak ]]; then
+    $SUDO apt update
+    $SUDO apt install ca-certificates -y
+    $SUDO cp /etc/apt/sources.list /etc/apt/sources.list.bak
+    $SUDO sed -i -r 's#http://(archive|security).ubuntu.com#https://mirrors.aliyun.com#g' /etc/apt/sources.list
+    $SUDO apt update
+fi
+
+# config timezone
+test ! -f /etc/timezone && echo "Asia\nShanghai" | $SUDO apt install tzdata -y
+$SUDO timedatectl set-timezone Asia/Shanghai
+
+# install tools and configure them
+if [[ "$config_install_level" == "minimal" ]]; then
+    echo "Minimal install level selected"
+    echo "Installing minimal configuration"
+    source ${DOTFILES_ROOT}/minimal
+else
+    echo "Standard install level selected"
+    echo "Installing standard configuration"
+    source ${DOTFILES_ROOT}/standard
+fi
+
+# configure dotfiles
+echo "Configuring common"
+source ${DOTFILES_ROOT}/common/setup
+
+echo "Configuring bin"
+source ${DOTFILES_ROOT}/bin/setup
+
+echo "Configuring git"
+source ${DOTFILES_ROOT}/git/setup
+
+echo "Configuring ssh"
+source ${DOTFILES_ROOT}/ssh/setup
+
+echo "Configuring bash"
+source ${DOTFILES_ROOT}/bash/setup
+
+echo "Configuring os"
+source ${DOTFILES_ROOT}/os/setup
+
+source ${HOME}/.bashrc
+echo "Installation completed"
+echo "Please restart your terminal to apply changes"

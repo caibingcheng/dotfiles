@@ -1,8 +1,5 @@
 #!/bin/bash
 
-sub_setction "bash"
-do_link $HOME/.bashrc $dotfiles_dir/bash/bashrc
-do_link $HOME/.bash_aliases $dotfiles_dir/bash/bash_aliases
-
-do_check source $HOME/.bashrc &
-check $! "source bashrc" "source bashrc failed"
+ln -sf ${DOTFILES_ROOT}/bash/bashrc ${HOME}/.bashrc
+ln -sf ${DOTFILES_ROOT}/bash/bash_aliases ${HOME}/.bash_aliases
+source ${HOME}/.bashrc

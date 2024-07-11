@@ -1,0 +1,28 @@
+#!/bin/bash
+
+current_dir=$(pwd)
+
+$SUDO apt update
+$SUDO apt install curl wget git -y
+
+# update git hosts
+github_hosts_url=https://cdn.jsdelivr.net/gh/caibingcheng/hosts@main/dns/github
+test -f /tmp/hosts || curl -s $github_hosts_url -o /tmp/hosts
+$SUDO bash -c "/bin/cp /etc/hosts /tmp/hosts_tmp"
+$SUDO bash -c "/bin/sed -i '/github/d' /tmp/hosts_tmp"
+$SUDO bash -c "/bin/cat /tmp/hosts >>/tmp/hosts_tmp"
+$SUDO cp /tmp/hosts_tmp /etc/hosts
+
+# install nix
+if [[ "$(command -v nix-env)" == "" ]]; then
+    bash <(curl -L https://nixos.org/nix/install)
+    source ~/.nix-profile/etc/profile.d/nix.sh
+    mkdir -p ~/.config/nix && echo 'substituters = https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/' >~/.config/nix/nix.conf
+    nix-channel --add https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixos-24.05 nixpkgs
+    nix-channel --update
+fi
+
+nix-channel --update
+nix-env -iA nixpkgs.iputils nixpkgs.preload nixpkgs.vim nixpkgs.autossh
+nix-env -iA nixpkgs.bat nixpkgs.fd nixpkgs.fzf nixpkgs.zoxide nixpkgs.ripgrep
+nix-env -iA nixpkgs.thefuck nixpkgs.tldr nixpkgs.gitui nixpkgs.eza

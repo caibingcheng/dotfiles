@@ -1,12 +1,11 @@
 #!/bin/bash
 
-sub_setction "bin"
-do_check [ -d "$HOME/bin" ] || mkdir -p "$HOME/bin" &
-check $! "check bin" "bin not found"
+mkdir -p "${HOME}/bin"
 
-do_link $HOME/bin/sf $dotfiles_dir/bin/sf
-do_link $HOME/bin/sip $dotfiles_dir/bin/sip
-do_link $HOME/bin/cip $dotfiles_dir/bin/cip
-do_link $HOME/bin/essh $dotfiles_dir/bin/essh
-do_link $HOME/bin/escp $dotfiles_dir/bin/escp
-do_link $HOME/bin/backup $dotfiles_dir/bin/backup
+ln -sf ${DOTFILES_ROOT}/bin/sf ${HOME}/bin/sf
+ln -sf ${DOTFILES_ROOT}/bin/sip ${HOME}/bin/sip
+ln -sf ${DOTFILES_ROOT}/bin/cip ${HOME}/bin/cip
+ln -sf ${DOTFILES_ROOT}/bin/essh ${HOME}/bin/essh
+ln -sf ${DOTFILES_ROOT}/bin/escp ${HOME}/bin/escp
+ln -sf ${DOTFILES_ROOT}/bin/backup ${HOME}/bin/backup
+ln -sf ${DOTFILES_ROOT}/bin/freebuffercache ${HOME}/bin/freebuffercache

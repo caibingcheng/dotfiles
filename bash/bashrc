@@ -116,6 +116,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-eval "$(brew --prefix)/bin/brew shellenv"
+# Created by `pipx` on 2024-07-11 08:55:03
+export PATH="$PATH:/home/bing/.local/bin"
+. "$HOME/.cargo/env"

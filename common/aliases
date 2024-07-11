@@ -1,5 +1,5 @@
 alias crc="test -f "$(command -v code)" && code ~/.dotfiles || vim ~/.dotfiles"
-alias dotfiles="$HOME/.dotfiles/setup"
+alias dotfiles="${HOME}/.dotfiles/setup"
 
 alias ssh="autossh"
 alias ntpon="timedatectl set-ntp yes"

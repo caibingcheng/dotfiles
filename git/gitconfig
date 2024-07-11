@@ -1,0 +1,7 @@
+[user]
+	name = caibingcheng
+	email = jack_cbc@163.com
+[diff]
+	tool = meld
+[core]
+	editor = vim

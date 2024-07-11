@@ -20,21 +20,8 @@ function git_config_user() {
     git config --global user.email "$user_email"
 }
 
-function git_config_slient() {
-    if [[ "$(command -v meld)" != "" ]]; then
-        git config --global diff.tool meld
-    fi
-}
-
-sub_setction "git"
-
-check_command git &
-check $! "check git" "git not found"
-if [[ "$?" == "0" ]]; then
-    git_check_user &
-    check $! "check git user" "git user not found"
-    on_fail git_config_user
-
-    git_config_slient
-    do_link $HOME/.git-completion.bash $dotfiles_dir/git/git-completion.bash
+if [[ "$(command -v git)" != "" ]]; then
+    git_check_user || git_config_user
+    ln -sf ${DOTFILES_ROOT}/git/git-completion.bash ${HOME}/.git-completion.bash
+    ln -sf ${DOTFILES_ROOT}/git/gitconfig ${HOME}/.gitconfig
 fi

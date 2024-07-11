@@ -5,6 +5,6 @@
 export HOMEBREW_NO_AUTO_UPDATE=true
 
 if [[ "$(uname)" == "Darwin" ]]; then
-    alias android-emuls="$HOME/Library/Android/sdk/emulator/emulator -list-avds"
-    alias android-emuup="$HOME/Library/Android/sdk/emulator/emulator -avd"
+    alias android-emuls="${HOME}/Library/Android/sdk/emulator/emulator -list-avds"
+    alias android-emuup="${HOME}/Library/Android/sdk/emulator/emulator -avd"
 fi
