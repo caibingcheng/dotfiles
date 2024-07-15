@@ -1,6 +1,12 @@
 ### For common
 
+# nix may raise something like:
+# /nix/store/5jw69mbaj5dg4l2bj58acg3gxywfszpj-bash-5.2p26/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+# I don't know the reason, here is the reference link:
+# https://unix.stackexchange.com/questions/743239/how-to-set-locale-in-nix-shell-on-ubuntu
+export LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
 export NIXPKGS_ALLOW_UNFREE=1
+
 export PATH=${HOME}/.cargo/bin:${HOME}/bin:$PATH
 
 if [[ -f ~/.aliases ]]; then

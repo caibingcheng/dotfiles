@@ -49,5 +49,6 @@ alias tt="tldr"
 alias rr="ranger"
 # ff is alias for thefuck
 alias gg="gitui"
+alias pp="tgpt"
 
 test -f "$(command -v batcat)" && alias bat="batcat"

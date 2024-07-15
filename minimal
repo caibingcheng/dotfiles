@@ -17,12 +17,11 @@ $SUDO cp /tmp/hosts_tmp /etc/hosts
 if [[ "$(command -v nix-env)" == "" ]]; then
     bash <(curl -L https://nixos.org/nix/install)
     source ~/.nix-profile/etc/profile.d/nix.sh
-    mkdir -p ~/.config/nix && echo 'substituters = https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/' >~/.config/nix/nix.conf
-    nix-channel --add https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixos-24.05 nixpkgs
-    nix-channel --update
 fi
 
+source ${current_dir}/nix/setup
 nix-channel --update
 nix-env -iA nixpkgs.iputils nixpkgs.preload nixpkgs.vim nixpkgs.autossh
 nix-env -iA nixpkgs.bat nixpkgs.fd nixpkgs.fzf nixpkgs.zoxide nixpkgs.ripgrep
 nix-env -iA nixpkgs.thefuck nixpkgs.tldr nixpkgs.gitui nixpkgs.eza
+nix-env -iA nixpkgs.netcat nixpkgs.nmap nixpkgs.tcpdump nixpkgs.iperf3 nixpkgs.iputils
