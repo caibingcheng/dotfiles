@@ -1,4 +1,0 @@
-#!/bin/bash
-
-ln -sf ${DOTFILES_ROOT}/common/aliases ${HOME}/.aliases
-ln -sf ${DOTFILES_ROOT}/common/cmmrc ${HOME}/.cmmrc

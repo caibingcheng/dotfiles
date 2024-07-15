@@ -1,1 +1,0 @@
-aarch64_linux2.nix

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-ln -sf ${DOTFILES_ROOT}/nix/nix-channels ${HOME}/.nix-channels
-mkdir -p ${HOME}/.config/nix && ln -sf ${DOTFILES_ROOT}/nix/nix.conf ${HOME}/.config/nix/nix.conf

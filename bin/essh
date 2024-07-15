@@ -4,7 +4,7 @@ set dst     [lindex $argv 0]
 set passwd  [lindex $argv 1]
 
 set timeout 10
-spawn autossh $dst
+spawn ssh $dst
 expect "password:"
 send "$passwd\r"
 interact

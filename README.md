@@ -15,7 +15,6 @@ curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/bootstrap | ba
 There's a few special files in the hierarchy.
 
 - **os/\***: OS configurations
-- **common/\***: Common configurations
 - **bin/\***: Scripts
 - **zsh/\***: zsh configurations
 - **bash/\***: bash configurations

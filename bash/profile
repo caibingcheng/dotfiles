@@ -1,0 +1,83 @@
+# shellcheck shell=sh
+# chezmoi:template:left-delimiter="# {{" right-delimiter=}}
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ]; then
+    export PATH="$HOME/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
+if [ -d "${HOME}/.local/share/flutter/bin" ]; then
+    export PATH="${HOME}/.local/share/flutter/bin:${PATH}"
+fi
+
+if [ -d "${HOME}/.cargo/bin" ]; then
+    export PATH="${HOME}/.cargo/bin:${PATH}"
+fi
+
+if [ -d "${HOME}/.local/go/bin" ]; then
+    export PATH="${HOME}/.local/go/bin:${PATH}"
+fi
+
+if [ -d "${HOME}/go/bin" ]; then
+    export PATH="${HOME}/go/bin:${PATH}"
+fi
+
+if [ -d "${GOPATH}/bin" ]; then
+    export PATH="${GOPATH}/bin:${PATH}"
+fi
+
+export LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+export NIXPKGS_ALLOW_UNFREE=1
+
+### Tools/Plugins Env
+export FZF_COMPLETION_TRIGGER="??"
+export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_T_OPTS=$FZF_DEFAULT_OPTS
+### fzf end
+
+### bat
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+### bat end
+
+### pipx
+test "$(command -v pipx)" != "" && eval "$(register-python-argcomplete3 pipx)"
+test -f "${HOME}/.cargo/env" && source "${HOME}/.cargo/env"
+### pipx end
+
+### brew
+export HOMEBREW_NO_AUTO_UPDATE=true
+test -x /home/linuxbrew/.linuxbrew/bin/brew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+### brew end
+
+### End Tools/Plugins Env
+
+### Comm functions
+function git_branch() {
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [ "${branch}" != "" ]; then
+        if [ "${branch}" == "(no branch)" ]; then
+            branch="($(git rev-parse --short HEAD)...)"
+        fi
+        echo "${1}${branch}${2}"
+    fi
+}
+
+function only_uptime() {
+    echo $(uptime | awk -F',' '{ \
+    if ($2 ~ /user/) { \
+      print $1 \
+    } else { \
+      print $1 $2 \
+    } \
+  }' | awk -F'up' '{print $2}')
+}
+
+export -f git_branch
+export -f only_uptime
+. "$HOME/.cargo/env"

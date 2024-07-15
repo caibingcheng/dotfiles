@@ -1,5 +1,0 @@
-#!/bin/zsh
-
-alias vzsh="vim ~/.zshrc"
-alias sba="source ~/.zshrc"
-alias clrc="code ~/.zshrc_local_rc"

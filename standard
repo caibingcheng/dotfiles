@@ -1,51 +1,10 @@
 #!/bin/bash
 
-current_dir=$(pwd)
-source ${current_dir}/minimal
+source ${DOTFILES_ROOT}/minimal
 
-$SUDO apt update
-nix-channel --update
-
-nix-env -iA nixpkgs.gnome.gnome-tweaks nixpkgs.meld nixpkgs.vscode nixpkgs.microsoft-edge nixpkgs.wireshark
-nix-env -iA nixpkgs.tgpt
-
-# install and setup c/c++ development environment
-$SUDO apt install build-essential cmake clang-format clang-tidy make gcc g++ gdb -y
-
-# install and setup python development environment
-$SUDO apt install python3 python3-pip python3-venv python3-dev pipx -y
-pipx ensurepath
-# pipx completions
-
-# install and setup rust development environment
-if [[ "$(command -v rustup)" == "" ]]; then
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-  rustup component add rls rust-analysis rust-src
-fi
-
-# install and setup html/css/javascript development environment
-# $SUDO apt install nodejs npm -y
-# npm install -g typescript eslint prettier
-
-# install ibus-rime, a chinese input method
+test -z "${APT_UPDATED_DONE}" && $SUDO apt update && export APT_UPDATED_DONE=true
+$SUDO apt install gnome-tweaks meld wireshark -y
 $SUDO apt install ibus-rime librime-data-pinyin-simp -y
 
-if [[ "$(command -v docker)" == "" ]]; then
-  # config docker
-  for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do $SUDO apt remove $pkg -y; done
-  # Add Docker's official GPG key:
-  $SUDO apt update
-  $SUDO apt install ca-certificates curl -y
-  $SUDO install -m 0755 -d /etc/apt/keyrings
-  $SUDO curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-  $SUDO chmod a+r /etc/apt/keyrings/docker.asc
-
-  # Add the repository to Apt sources:
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
-    $SUDO tee /etc/apt/sources.list.d/docker.list >/dev/null
-  $SUDO apt update
-  $SUDO apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
-  # config docker done
-fi
+export HOMEBREW_NO_AUTO_UPDATE=true
+brew bundle --file ${DOTFILES_ROOT}/brew/standard.brewfile

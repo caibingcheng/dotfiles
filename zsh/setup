@@ -1,7 +1,0 @@
-#!/bin/zsh
-
-sub_setction "zsh"
-do_link $HOME/.zshrc $dotfiles_dir/zsh/zshrc
-do_link $HOME/.zinit_plugins $dotfiles_dir/zsh/zinit_plugins
-do_link $HOME/.zshrc_aliases $dotfiles_dir/zsh/zshrc_aliases
-do_link $HOME/.zshrc_bindkeys $dotfiles_dir/zsh/zshrc_bindkeys

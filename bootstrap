@@ -32,27 +32,14 @@ if [[ ! -f /etc/apt/sources.list.bak ]]; then
     $SUDO cp /etc/apt/sources.list /etc/apt/sources.list.bak
     $SUDO sed -i -r 's#http://(archive|security).ubuntu.com#https://mirrors.aliyun.com#g' /etc/apt/sources.list
     $SUDO apt update
+    export APT_UPDATED_DONE=true
 fi
 
 # config timezone
 test ! -f /etc/timezone && echo "Asia\nShanghai" | $SUDO apt install tzdata -y
 $SUDO timedatectl set-timezone Asia/Shanghai
 
-# install tools and configure them
-if [[ "$config_install_level" == "minimal" ]]; then
-    echo "Minimal install level selected"
-    echo "Installing minimal configuration"
-    source ${DOTFILES_ROOT}/minimal
-else
-    echo "Standard install level selected"
-    echo "Installing standard configuration"
-    source ${DOTFILES_ROOT}/standard
-fi
-
 # configure dotfiles
-echo "Configuring common"
-source ${DOTFILES_ROOT}/common/setup
-
 echo "Configuring bin"
 source ${DOTFILES_ROOT}/bin/setup
 
@@ -67,6 +54,17 @@ source ${DOTFILES_ROOT}/bash/setup
 
 echo "Configuring os"
 source ${DOTFILES_ROOT}/os/setup
+
+# install tools and configure them
+if [[ "$config_install_level" == "minimal" ]]; then
+    echo "Minimal install level selected"
+    echo "Installing minimal configuration"
+    source ${DOTFILES_ROOT}/minimal
+else
+    echo "Standard install level selected"
+    echo "Installing standard configuration"
+    source ${DOTFILES_ROOT}/standard
+fi
 
 source ${HOME}/.bashrc
 echo "Installation completed"
