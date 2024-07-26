@@ -69,13 +69,11 @@ function git_branch() {
 }
 
 function only_uptime() {
-    echo $(uptime | awk -F',' '{ \
-    if ($2 ~ /user/) { \
-      print $1 \
-    } else { \
-      print $1 $2 \
-    } \
-  }' | awk -F'up' '{print $2}')
+    # use HH:SS and HH can be more than 24
+    seconds=$(cut -d. -f1 /proc/uptime)
+    hours=$(($seconds/3600))
+    minutes=$(($seconds%3600/60))
+    echo "${hours}:${minutes}"
 }
 
 export -f git_branch

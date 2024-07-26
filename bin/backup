@@ -1,29 +1,22 @@
-
 #!/bin/bash
-
-# A script to perform incremental backups using rsync
+# A script to perform incremental backups using rsync, keeping only the last 10 backups
 
 set -o errexit
 set -o nounset
 set -o pipefail
 
-# must need 2 arguments
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <source_dir> <backup_dir>"
-  exit 1
-fi
-
+readonly SOURCE_DIR="$1"
 # check if source directory exists
-if [ ! -d "$1" ]; then
+if [ ! -d "${SOURCE_DIR}" ]; then
   echo "Source directory does not exist"
   exit 1
 fi
+SOURCE_DIR_NAME=$(basename $(realpath "${SOURCE_DIR}"))
 
-readonly SOURCE_DIR="$1"
-readonly BACKUP_DIR="$2"
+readonly BACKUP_DIR_BASE=${BACKUP_DIR}/${SOURCE_DIR_NAME}
 readonly DATETIME="$(date '+%Y-%m-%d_%H:%M:%S')"
-readonly BACKUP_PATH="${BACKUP_DIR}/${DATETIME}"
-readonly LATEST_LINK="${BACKUP_DIR}/latest"
+readonly BACKUP_PATH="${BACKUP_DIR_BASE}/${DATETIME}"
+readonly LATEST_LINK="${BACKUP_DIR_BASE}/latest"
 
 user_input() {
   local response
@@ -39,7 +32,7 @@ user_input() {
 }
 
 echo "Source directory: ${SOURCE_DIR}"
-echo "Backup directory: ${BACKUP_DIR}"
+echo "Backup directory: ${BACKUP_DIR_BASE}"
 if user_input "Do you want to continue?"; then
   echo "Backing up ${SOURCE_DIR} to ${BACKUP_PATH}"
 else
@@ -47,13 +40,15 @@ else
   exit 1
 fi
 
-mkdir -p "${BACKUP_DIR}"
-
+mkdir -p "${BACKUP_DIR_BASE}"
 rsync -av --delete \
   "${SOURCE_DIR}/" \
   --link-dest "${LATEST_LINK}" \
   --exclude=".cache" \
   "${BACKUP_PATH}"
 
+# Update the latest link
 rm -rf "${LATEST_LINK}"
 ln -s "${BACKUP_PATH}" "${LATEST_LINK}"
+
+tree "${BACKUP_DIR_BASE}" -L 1

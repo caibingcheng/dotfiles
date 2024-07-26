@@ -19,6 +19,10 @@ if [[ ! -d ${HOME}/.dotfiles ]]; then
     git clone https://github.com/caibingcheng/dotfiles.git ${HOME}/.dotfiles || exit 1
     cd ${HOME}/.dotfiles && current_dir=$(pwd) || exit 1
 fi
+
+if [[ -d ${HOME}/.dotfiles ]]; then
+    cd ${HOME}/.dotfiles && current_dir=$(pwd) || exit 1
+fi
 export DOTFILES_ROOT=$current_dir
 export NIXPKGS_ALLOW_UNFREE=1
 
@@ -51,6 +55,9 @@ source ${DOTFILES_ROOT}/ssh/setup
 
 echo "Configuring bash"
 source ${DOTFILES_ROOT}/bash/setup
+
+echo "Configuring tmux"
+source ${DOTFILES_ROOT}/tmux/setup
 
 echo "Configuring os"
 source ${DOTFILES_ROOT}/os/setup

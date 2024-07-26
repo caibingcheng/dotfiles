@@ -2,10 +2,15 @@
 
 set src     [lindex $argv 0]
 set dst     [lindex $argv 1]
-set passwd  [lindex $argv 2]
 
+# try all passwds
 set timeout 10
 spawn scp $src $dst
-expect "password:"
-send "$passwd\r"
+for {set i 2} {$i < $argc} {incr i} {
+    set passwd [lindex $argv $i]
+    expect {
+        "yes/no" { send "yes\r"; exp_continue }
+        "password:" { send "$passwd\r" }
+    }
+}
 interact

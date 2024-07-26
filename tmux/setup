@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [[ ! -d ${HOME}/.tmux ]]; then
+    cd ${HOME}
+    git clone https://github.com/gpakosz/.tmux.git ${HOME}/.tmux
+    ln -sf ${HOME}/.tmux/.tmux.conf ${HOME}/.tmux.conf
+fi
+
+ln -sf ${DOTFILES_ROOT}/tmux/tmux.conf.local ${HOME}/.tmux.conf.local
