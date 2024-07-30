@@ -1,0 +1,8 @@
+tap "homebrew/bundle"
+brew "hugo"
+brew "nmap"
+brew "tcpdump"
+brew "syncthing"
+brew "cmake"
+brew "clang-format"
+brew "docker"

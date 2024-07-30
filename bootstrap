@@ -2,7 +2,7 @@
 
 current_dir=$(pwd)
 valid_install_level=(minimal standard)
-config_install_level=standard
+config_install_level=minimal
 if [[ ! -z $1 ]]; then
     if [[ " ${valid_install_level[@]} " =~ " $1 " ]]; then
         config_install_level=$1
