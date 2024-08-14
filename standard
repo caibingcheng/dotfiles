@@ -5,6 +5,7 @@ source ${DOTFILES_ROOT}/minimal
 test -z "${APT_UPDATED_DONE}" && $SUDO apt update && export APT_UPDATED_DONE=true
 $SUDO apt install gnome-tweaks meld wireshark -y
 $SUDO apt install ibus-rime librime-data-pinyin-simp -y
+$SUDO apt install flameshot -y
 
 export HOMEBREW_NO_AUTO_UPDATE=true
 brew bundle --file ${DOTFILES_ROOT}/brew/standard.brewfile

@@ -10,8 +10,8 @@ alias ntpoff="timedatectl set-ntp no"
 
 alias gb="git branch"
 alias gba="git branch -a"
-alias gss="git status"
-alias gssu="git status --untracked-files=no"
+alias gss="git status --short"
+alias gssu="gss --untracked-files=no"
 alias gll="git log"
 alias gaa="git add ."
 alias gmm="git commit"
@@ -27,12 +27,13 @@ alias gits="git multi"
 alias gsb="gits branch"
 alias gsba="gits branch -a"
 alias gsss="gits status"
-alias gsssu="gits status --untracked-files=no"
+alias gsssu="gsss --untracked-files=no"
 alias gsll="gits log"
 alias gsdd="gits diff"
 
 test -f "$(command -v exa)" && alias ls="exa"
-test -f "$(command -v fdfind)" && alias fd="fdfind -I"
+test -f "$(command -v fd)" && alias fd="fd --hidden --no-ignore "
+test -f "$(command -v fdfind)" && alias fd="fdfind --hidden --no-ignore "
 test -f "$(command -v batcat)" && alias bat="batcat"
 alias ll="ls -lh"
 alias la="ls -lha"
@@ -66,4 +67,39 @@ alias ..="z .."
 alias ...="z .."
 alias ....="z ../.."
 
-alias zc='zc__() { cur__=$(pwd) && echo "$@" && z "$@" && code . && z ${cur__}; } && zc__'
+alias zc='__zc() { local cur=$(pwd) && z "$@" && echo $(pwd) && code . && z ${cur}; } && __zc'
+
+_vv() {
+    venv_dir="$HOME/venvs"
+    venv_list=$(ls $venv_dir)
+    local pre cur opts
+    COMPREPLY=()
+    pre="${COMP_WORDS[COMP_CWORD-1]}"
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=($(compgen -W "${venv_list}" -- ${cur}))
+}
+test -x "vv" && unalias vv
+complete -F _vv vv
+alias vv='__vv() { source $HOME/venvs/"$1"/bin/activate; } && __vv'
+
+_swap() {
+    left=$1
+    right=$2
+    left_tmp=$left.$RANDOM
+    if [[ -f $left_tmp || -d $left_tmp ]]; then
+        echo "try again!"
+        return 1
+    fi
+    if [[ ! -f $left && ! -d $left ]]; then
+        echo "$left not exsit!"
+        return 1
+    fi
+    if [[ ! -f $right && ! -d $right ]]; then
+        echo "$right not exsit!"
+        return 1
+    fi
+    rename $left $left_tmp $left
+    rename $right $left $right
+    rename $left_tmp $right $left_tmp
+}
+alias swap='_swap'

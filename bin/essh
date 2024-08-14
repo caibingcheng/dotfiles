@@ -10,5 +10,9 @@ for {set i 1} {$i < $argc} {incr i} {
         "yes/no" { send "yes\r"; exp_continue }
         "password:" { send "$passwd\r" }
     }
+    expect {
+        "Permission denied" { puts "\n"; }
+        "~#" { break }
+    }
 }
 interact
