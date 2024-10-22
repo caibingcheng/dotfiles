@@ -11,7 +11,7 @@ for {set i 1} {$i < $argc} {incr i} {
         "password:" { send "$passwd\r" }
     }
     expect {
-        "Permission denied" { puts "\n"; }
+        "Permission denied" {}
         "~#" { break }
     }
 }
