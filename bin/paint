@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+import sys
+import re
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import argparse
+import threading
+
+
+class PipeNumbers(object):
+    instance = None
+
+    @staticmethod
+    def get_instance():
+        if not PipeNumbers.instance:
+            PipeNumbers.instance = PipeNumbers()
+        return PipeNumbers.instance
+
+    def __init__(self):
+        self.data = []
+        self.lock = threading.Lock()
+        self.alive = True
+        self.thread = threading.Thread(target=self.__read_numbers)
+        self.thread.start()
+
+    def __read_numbers(self):
+        while True:
+            data = sys.stdin.readline()
+            if not data:
+                break
+            numbers = [float(x) for x in re.findall(r"[-+]?\d*\.\d+|\d+", data)]
+            with self.lock:
+                self.data.append(tuple(numbers))
+        self.alive = False
+
+    def __eof(self):
+        """
+        True:
+            alive and has data
+            alive and no data
+            not alive and has data
+        False:
+            not alive and no data
+        """
+        return not self.alive and not self.data
+
+    def pop(self, count=1):
+        """
+        return count numbers from data [Must]
+        """
+        batch = []
+        while not self.__eof() and len(batch) < count:
+            with self.lock:
+                if self.data:
+                    batch.append(self.data.pop(0))
+        if self.__eof() and len(batch) != count:
+            batch = []
+        return batch
+
+    def pop_fast(self, count=1):
+        """
+        return count numbers from data [As possible]
+        """
+        batch = []
+        while self.data and len(batch) < count:
+            with self.lock:
+                batch.append(self.data.pop(0))
+        return batch
+
+
+class ModeOption(object):
+    mode_options = {}
+
+    @staticmethod
+    def add(mode, help=""):
+        def decorator(func):
+            ModeOption.mode_options[mode] = {
+                "func": func,
+                "help": help or func.__doc__,
+            }
+            return func
+
+        return decorator
+
+    @staticmethod
+    def get(mode):
+        return ModeOption.mode_options.get(mode)["func"]
+
+
+class AppendixOption(object):
+    appendix_options = {}
+
+    @staticmethod
+    def add(appendix, help=""):
+        def decorator(func):
+            AppendixOption.appendix_options[appendix] = {
+                "func": func,
+                "help": help or func.__doc__,
+            }
+            return func
+
+        return decorator
+
+    @staticmethod
+    def get(appendix):
+        return AppendixOption.appendix_options.get(appendix)["func"]
+
+
+class GlobalCache(object):
+    cache = {}
+
+    @staticmethod
+    def get(key):
+        return GlobalCache.cache.get(key)
+
+    def has(key):
+        return key in GlobalCache.cache
+
+    @staticmethod
+    def set(key, value):
+        GlobalCache.cache[key] = value
+
+
+@AppendixOption.add("appendix_mean", "paint mean line")
+def appendix_mean(frame, args, lines, ax):
+    line_main = lines["main"]
+    x, y = line_main.get_data()
+    if len(y) == 0:
+        return
+    mean_y = sum(y) / len(y)
+    lines["appendix_mean"].set_data([x[0], x[-1]], [mean_y, mean_y])
+
+
+@AppendixOption.add("appendix_max", "paint max line")
+def appendix_max(frame, args, lines, ax):
+    line_main = lines["main"]
+    x, y = line_main.get_data()
+    max_y = max(y)
+    lines["appendix_max"].set_data([x[0], x[-1]], [max_y, max_y])
+
+
+@AppendixOption.add("appendix_min", "paint min line")
+def appendix_min(frame, args, lines, ax):
+    line_main = lines["main"]
+    x, y = line_main.get_data()
+    min_y = min(y)
+    lines["appendix_min"].set_data([x[0], x[-1]], [min_y, min_y])
+
+
+@AppendixOption.add("appendix_global_mean", "paint global mean line")
+def appendix_gloabl_mean(frame, args, lines, ax):
+    line_main = lines["main"]
+    x, y = line_main.get_data()
+    sum_y = sum(y)
+    len_y = len(y)
+    if len_y == 0:
+        return
+    mean_y = sum_y / len_y
+    if GlobalCache.has("mean_y"):
+        cache_mean_y = GlobalCache.get("mean_y")
+        sum_y = sum_y + cache_mean_y[0]
+        len_y = len_y + cache_mean_y[1]
+        mean_y = sum_y / len_y
+    GlobalCache.set("mean_y", (sum_y, len_y))
+    lines["appendix_global_mean"].set_data([x[0], x[-1]], [mean_y, mean_y])
+
+
+@AppendixOption.add("appendix_global_max", "paint global max line")
+def appendix_gloabl_max(frame, args, lines, ax):
+    line_main = lines["main"]
+    x, y = line_main.get_data()
+    max_y = max(y)
+    if GlobalCache.has("max_y"):
+        max_y = max(max_y, GlobalCache.get("max_y"))
+    GlobalCache.set("max_y", max_y)
+    lines["appendix_global_max"].set_data([x[0], x[-1]], [max_y, max_y])
+
+
+@AppendixOption.add("appendix_global_min", "paint global min line")
+def appendix_gloabl_min(frame, args, lines, ax):
+    line_main = lines["main"]
+    x, y = line_main.get_data()
+    min_y = min(y)
+    if GlobalCache.has("min_y"):
+        min_y = min(min_y, GlobalCache.get("min_y"))
+    GlobalCache.set("min_y", min_y)
+    lines["appendix_global_min"].set_data([x[0], x[-1]], [min_y, min_y])
+
+
+@ModeOption.add("batch", "paint x,y pairs in batch mode")
+def update_batch(frame, args, lines, ax):
+    lines_xy = PipeNumbers.get_instance().pop(args.size)
+    if not lines_xy:
+        lines.values()
+    lines["main"].set_data(*zip(*sorted(lines_xy, key=lambda x: x[0])))
+
+    ax.relim()
+    ax.autoscale_view()
+    return lines.values()
+
+
+@ModeOption.add("stream", "paint x,y pairs or y in stream mode")
+def update_stream(frame, args, lines, ax):
+    batch_size = (args.size // 2) if args.fast else 1
+    batch_size = max(1, batch_size)
+    xy = PipeNumbers.get_instance().pop_fast(batch_size)
+    if not xy:
+        return lines.values()
+    lines_xy = lines["main"].get_data()
+    lines_xy = [
+        list(lines_xy[0])[-args.size + len(xy) :],
+        list(lines_xy[1])[-args.size + len(xy) :],
+    ]
+    if len(xy[0]) == 1:
+        start_x = (lines_xy[0][-1] + 1) if lines_xy[0] else 0
+        xy = [(start_x + i, y) for i, y in enumerate(xy)]
+    lines_xy[0].extend([x for x, _ in xy])
+    lines_xy[1].extend([y for _, y in xy])
+    lines_xy[0] = lines_xy[0][-args.size :]
+    lines_xy[1] = lines_xy[1][-args.size :]
+    lines["main"].set_data(*lines_xy)
+    for appendix in lines.keys():
+        if appendix.startswith("appendix_"):
+            AppendixOption.get(appendix)(frame, args, lines, ax)
+
+    ax.relim()
+    ax.autoscale_view()
+    return lines.values()
+
+
+argparser = argparse.ArgumentParser()
+argparser.add_argument(
+    "-m",
+    "--mode",
+    type=str,
+    default="stream",
+    choices=ModeOption.mode_options.keys(),
+    help="mode\n"
+    + "\n".join(f"{k}: {v['help']}" for k, v in ModeOption.mode_options.items()),
+)
+argparser.add_argument(
+    "-s",
+    "--size",
+    type=int,
+    default=1000,
+    help="size, only used in batch and stream mode",
+)
+argparser.add_argument(
+    "-f",
+    "--fast",
+    action="store_true",
+    help="fast mode, only used in stream mode",
+)
+argparser.add_argument(
+    "-a",
+    "--appendix",
+    type=str,
+    help="appendix lines, valid options\n"
+    + "\n".join(
+        f"{k}: {v['help']}" for k, v in AppendixOption.appendix_options.items()
+    ),
+)
+
+argparser.add_argument("--title", type=str, help="title")
+argparser.add_argument("--x-label", type=str, help="x label")
+argparser.add_argument("--y-label", type=str, help="y label")
+argparser.add_argument("--x-line", type=str, help="x line position")
+argparser.add_argument("--y-line", type=str, help="y line position")
+argparser.add_argument("--x-size", type=int, default=3, help="x size")
+argparser.add_argument("--y-size", type=int, default=3, help="y size")
+argparser.add_argument(
+    "--interval", type=int, default=1, help="refresh interval in milliseconds"
+)
+
+
+args = argparser.parse_args()
+figure, ax = plt.subplots()
+ax.set_autoscaley_on(True)
+ax.grid()
+
+if args.title:
+    ax.set_title(args.title)
+if args.x_label:
+    ax.set_xlabel(args.x_label)
+if args.y_label:
+    ax.set_ylabel(args.y_label)
+if args.x_line:
+    for x in args.x_line.split(","):
+        ax.axvline(x=float(x), color="r", linestyle="-", linewidth=args.x_size)
+if args.y_line:
+    for y in args.y_line.split(","):
+        ax.axhline(y=float(y), color="r", linestyle="-", linewidth=args.y_size)
+
+lines = {}
+# main always on top
+lines["main"] = ax.plot([], [], marker="o", linestyle="-", markersize=5, zorder=999)[0]
+if args.appendix:
+    for appendix in args.appendix.split(","):
+        key = f"appendix_{appendix.strip()}"
+        lines[key] = ax.plot([], [], linestyle="-", linewidth=3)[0]
+
+ax.minorticks_on()
+ax.grid(which="major", axis="both", linestyle="-", linewidth=1)
+ax.grid(which="minor", axis="both", linestyle="--", linewidth=0.5)
+ax.legend(
+    lines.values(),
+    [name.replace("appendix_", "") for name in lines.keys()],
+    loc="upper right",
+    fontsize="small",
+)
+figure.tight_layout()
+
+# Create an animation that calls update_plot every 100 milliseconds
+ani = FuncAnimation(
+    figure,
+    ModeOption.get(args.mode),
+    fargs=(args, lines, ax),
+    interval=args.interval,
+    cache_frame_data=False,
+)
+# Show the plot
+plt.show()

@@ -9,3 +9,4 @@ ln -sf ${DOTFILES_ROOT}/bin/essh ${HOME}/bin/essh
 ln -sf ${DOTFILES_ROOT}/bin/escp ${HOME}/bin/escp
 ln -sf ${DOTFILES_ROOT}/bin/backup ${HOME}/bin/backup
 ln -sf ${DOTFILES_ROOT}/bin/freebuffercache ${HOME}/bin/freebuffercache
+ln -sf ${DOTFILES_ROOT}/bin/paint ${HOME}/bin/paint
