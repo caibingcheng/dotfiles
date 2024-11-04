@@ -64,16 +64,27 @@ function git_branch() {
         if [ "${branch}" == "(no branch)" ]; then
             branch="($(git rev-parse --short HEAD)...)"
         fi
-        echo "${1}${branch}${2}"
+        commit=$(git rev-parse --short HEAD)
+        staged_count=$(git diff --staged --name-only | wc -l)
+        unstaged_count=$(git diff --name-only | wc -l)
+        untracked_count=$(git ls-files --others --exclude-standard | wc -l)
+        stage_info="s:${staged_count} us:${unstaged_count} ut:${untracked_count}"
+        echo "${1}${branch} (${commit}) (${stage_info})${2}"
     fi
 }
 
 function only_uptime() {
     # use HH:SS and HH can be more than 24
     seconds=$(cut -d. -f1 /proc/uptime)
-    hours=$(($seconds/3600))
-    minutes=$(($seconds%3600/60))
-    echo "${hours}:${minutes}"
+    hours=$(($seconds / 3600))
+    minutes=$(($seconds % 3600 / 60))
+    if [ $hours -gt 24 ]; then
+        days=$(($hours / 24))
+        hours=$(($hours % 24))
+        echo "${days}d${hours}h"
+    else
+        echo "${hours}:${minutes}"
+    fi
 }
 
 export -f git_branch
