@@ -1,0 +1,2 @@
+mkdir -p ${HOME}/.config/tealdeer/
+ln -sf ${DOTFILES_ROOT}/tealdeer/config ${HOME}/.config/tealdeer/config.toml
