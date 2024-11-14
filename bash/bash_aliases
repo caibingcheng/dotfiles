@@ -43,7 +43,7 @@ alias line="wc -l"
 alias word="wc -w"
 alias byte="wc -c"
 alias bat="bat --color=always"
-alias mmem="top -b -o +%MEM | head -n 20"
+alias mmem="ps aux --sort=-%mem | head -n 20"
 alias mm="make -j$(nproc)"
 
 alias tt="tldr"

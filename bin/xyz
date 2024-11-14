@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import re
+
+def extract_number(s):
+    match = re.search(r'[-+]?\d*\.?\d+', s)
+    return float(match.group()) if match else 0.0
+
+tokens = " ".join(sys.argv[1:])
+tokens = re.sub(r'[^\d\s.-]', '', tokens)
+tokens = tokens.split()
+
+x = extract_number(tokens[0])
+y = extract_number(tokens[1])
+z = extract_number(tokens[2])
+
+print(f"({x},{y},{z}) --> {(x ** 2 + y ** 2 + z ** 2) ** 0.5}")
