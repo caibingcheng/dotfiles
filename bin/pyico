@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+import sys
+from PIL import Image
+
+def create_icons(image_path, output_name, extra_sizes):
+    ico_sizes = [(48, 48)]
+    png_sizes = [(32, 32), (192, 192), (270, 270)]
+    for size in extra_sizes:
+        size = size.split("x")
+        size = (int(size[0]), int(size[1]))
+        png_sizes.append(size)
+    img = Image.open(image_path)
+
+    # Save favicon.ico
+    img.save(f"{output_name}.ico", sizes=ico_sizes)
+
+    # Save PNG files
+    for size in png_sizes:
+        img_resized = img.resize(size, Image.LANCZOS)
+        img_resized.save(f"{output_name}-{size[0]}x{size[1]}.png")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: python ico.py <image_path> <output_name>")
+        sys.exit(1)
+
+    image_path = sys.argv[1]
+    output_name = sys.argv[2]
+    extra_sizes = sys.argv[3:]
+    create_icons(image_path, output_name, extra_sizes)
