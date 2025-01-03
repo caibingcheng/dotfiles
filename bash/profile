@@ -82,7 +82,7 @@ function git_branch() {
         unstaged_count=$(git diff --name-only | wc -l)
         untracked_count=$(git ls-files --others --exclude-standard | wc -l)
         stage_info="s:${staged_count} us:${unstaged_count} ut:${untracked_count}"
-        echo "${1}${branch} (${commit}) (${stage_info})${2}"
+        echo -e "\e[2m${1}${branch}\e[0m \e[2m(${commit}) (${stage_info})${2}\e[0m"
     fi
 }
 
@@ -94,9 +94,20 @@ function only_uptime() {
     if [ $hours -gt 24 ]; then
         days=$(($hours / 24))
         hours=$(($hours % 24))
-        echo "${days}d${hours}h"
+        # > 2d, use ligter color
+        # > 5d, use even lighter color
+        # > 10d, use even lighter color
+        if [ $days -gt 10 ]; then
+            echo -e "\e[93;1m[${days}d${hours}h]\e[0m"
+        elif [ $days -gt 5 ]; then
+            echo -e "\e[93;2m[${days}d${hours}h]\e[0m"
+        elif [ $days -gt 2 ]; then
+            echo -e "\e[32;2m[${days}d${hours}h]\e[0m"
+        else
+          echo -e "\e[2m[${days}d${hours}h]\e[0m"
+        fi
     else
-        echo "${hours}:${minutes}"
+        echo -e "\e[2m[${hours}:${minutes}]\e[0m"
     fi
 }
 

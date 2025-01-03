@@ -1,0 +1,42 @@
+#!/bin/python3
+
+import os
+import re
+
+def number_bits(number):
+    bit_length = number.bit_length()
+    bits = []
+    for i in range(bit_length):
+        if number & (1 << i):
+            bits.append(i)
+    print("{:<5} {:<10} {}".format("Bit", "Position", "Value"))
+    # align 8 bits
+    bit_length = max(bit_length + (8 - bit_length % 8) % 8, 8)
+    for i in range(bit_length):
+        print("{:<5} {:<10} {}".format(1 if i in bits else 0, i, 1 << i))
+    print(f"Decimal: {number}")
+    # print(f"Octal: {str(oct(number))[2:]}")
+    print(f"Binary: {str(bin(number))[2:]}")
+    print(f"Hex: {str(hex(number))[2:].upper()}")
+
+def bits_number(args):
+    number = 0
+    bits = args[0]
+    bits = bits[1:]
+    for i, bit in enumerate(bits):
+        if bit == "1":
+            number += 1 << (len(bits) - i - 1)
+    number_bits(number)
+
+def extract_number(arg):
+    return int(re.sub(r"\D", "", arg))
+
+if __name__ == '__main__':
+    args = os.sys.argv
+    number = args[1]
+    is_start_with_b = number.startswith("b")
+    if not is_start_with_b:
+        number = extract_number(number)
+        number_bits(number)
+    else:
+        bits_number(number)

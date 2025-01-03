@@ -1,15 +1,16 @@
 #!/bin/bash
 
-alias sba=". ~/.bash_profile"
+alias sba=". ~/.bashrc"
+alias ssba=". ~/.bash_profile"
 alias crc="test -f "$(command -v code)" && code ~/.dotfiles || vim ~/.dotfiles"
 alias dotfiles="${HOME}/.dotfiles/bootstrap"
 
-alias ssh="autossh"
+alias ssh="/bin/ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10"
 alias ntpon="timedatectl set-ntp yes"
 alias ntpoff="timedatectl set-ntp no"
 
-alias gb="git branch"
-alias gba="git branch -a"
+alias gb="git branch --sort=-committerdate"
+alias gba="git branch -a --sort=-committerdate"
 alias gss="git status --short"
 alias gssu="gss --untracked-files=no"
 alias gll="git log"
@@ -59,13 +60,31 @@ test -f "$(command -v zoxide)" && eval "$(zoxide init bash)"
 test -f "$(command -v zoxide)" || alias z="cd"
 test -f "$(command -v thefuck)" && eval $(thefuck --alias ff)
 
-alias cd-="cd -"
-alias cd..="cd .."
-alias z-="z -"
-alias z..="z .."
-alias ..="z .."
-alias ...="z .."
-alias ....="z ../.."
+function _builtin_cd() {
+    builtin cd "$@" &&
+    if [[ -f ".auto.bash" ]]; then
+        echo "source .auto.bash"
+        source .auto.bash
+    fi
+}
+
+function _zoxide_cd() {
+    z "$@" &&
+    if [[ -f ".auto.bash" ]]; then
+        echo "source .auto.bash"
+        source .auto.bash
+    fi
+}
+
+alias cd="_builtin_cd"
+alias z="_zoxide_cd"
+alias cd-="_builtin_cd -"
+alias cd..="_builtin_cd .."
+alias z-="_zoxide_cd -"
+alias z..="_zoxide_cd .."
+alias ..="_zoxide_cd .."
+alias ...="_zoxide_cd .."
+alias ....="_zoxide_cd ../.."
 
 alias zc='__zc() { local cur=$(pwd) && z "$@" && echo $(pwd) && code . && z ${cur}; } && __zc'
 
@@ -80,7 +99,19 @@ _vv() {
 }
 test -x "vv" && unalias vv
 complete -F _vv vv
-alias vv='__vv() { source $HOME/venvs/"$1"/bin/activate; } && __vv'
+alias vv='__vv() {
+    if [ "$1" == "create" ]; then
+        shift
+        python3 -m venv $HOME/venvs/"$1"
+        complete -F _vv vv
+    elif [ "$1" == "delete" ]; then
+        shift
+        rm -rf $HOME/venvs/"$1"
+        complete -F _vv vv
+    else
+        source $HOME/venvs/"$1"/bin/activate
+    fi
+} && __vv'
 
 _swap() {
     left=$1
@@ -103,3 +134,8 @@ _swap() {
     rename $left_tmp $right $left_tmp
 }
 alias swap='_swap'
+
+alias ntpon="timedatectl set-ntp yes"
+alias ntpoff="timedatectl set-ntp no"
+alias makearm="make CROSS_COMPILE=aarch64-linux-gnu-"
+alias netrestart="sudo systemctl restart NetworkManager.service"

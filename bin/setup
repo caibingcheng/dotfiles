@@ -12,3 +12,5 @@ ln -sf ${DOTFILES_ROOT}/bin/freebuffercache ${HOME}/bin/freebuffercache
 ln -sf ${DOTFILES_ROOT}/bin/paint ${HOME}/bin/paint
 ln -sf ${DOTFILES_ROOT}/bin/xyz ${HOME}/bin/xyz
 ln -sf ${DOTFILES_ROOT}/bin/pyico ${HOME}/bin/pyico
+ln -sf ${DOTFILES_ROOT}/bin/bb ${HOME}/bin/bb
+
