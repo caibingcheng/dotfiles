@@ -14,7 +14,7 @@ fi
 SOURCE_DIR_NAME=$(basename $(realpath "${SOURCE_DIR}"))
 
 readonly BACKUP_DIR_BASE=${BACKUP_DIR}/${SOURCE_DIR_NAME}
-readonly DATETIME="$(date '+%Y-%m-%d_%H:%M:%S')"
+readonly DATETIME="$(date '+%Y_%m_%d_%H_%M_%S')"
 readonly BACKUP_PATH="${BACKUP_DIR_BASE}/${DATETIME}"
 readonly LATEST_LINK="${BACKUP_DIR_BASE}/latest"
 
