@@ -63,7 +63,6 @@ test -f "$(command -v thefuck)" && eval $(thefuck --alias ff)
 function _builtin_cd() {
     builtin cd "$@" &&
     if [[ -f ".auto.bash" ]]; then
-        echo "source .auto.bash"
         source .auto.bash
     fi
 }
@@ -71,7 +70,6 @@ function _builtin_cd() {
 function _zoxide_cd() {
     z "$@" &&
     if [[ -f ".auto.bash" ]]; then
-        echo "source .auto.bash"
         source .auto.bash
     fi
 }
