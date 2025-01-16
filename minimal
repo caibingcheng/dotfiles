@@ -10,11 +10,15 @@ $SUDO cp /tmp/hosts_tmp /etc/hosts
 
 test -z "${APT_UPDATED_DONE}" && $SUDO apt update && export APT_UPDATED_DONE=true
 $SUDO apt install curl wget git preload -y
+$SUDO apt install vim make -y
 $SUDO apt install build-essential gcc g++ gdb -y
 $SUDO apt install python3 python3-pip python3-venv python3-dev pipx -y
 
 # install rust
 test -x "$(command -v rustup)" || source ${DOTFILES_ROOT}/rust/install
+
+#install pyenv
+# test -x "$(command -v pyenv)" || "curl https://pyenv.run | bash"
 
 # install brew
 if [[ "$(command -v brew)" == "" ]]; then

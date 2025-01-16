@@ -9,3 +9,45 @@ $SUDO apt install flameshot -y
 
 export HOMEBREW_NO_AUTO_UPDATE=true
 brew bundle --file ${DOTFILES_ROOT}/brew/standard.brewfile
+
+# install or update vscode
+repo_pool="https://packages.microsoft.com/repos/vscode/pool/main/c/code/"
+# get latest version
+version=$(test -x "$(command -v code)" && code --version | grep -oP '(\d+\.)+\d+' || echo "0.0.0")
+latest_version=$(curl -s $repo_pool | grep -oP 'code_.*?_amd64\.deb' | sort -V | tail -n 1)
+# version in latest_version string
+echo "Latest version: $latest_version"
+echo "Current version: $version"
+if [[ $latest_version == *"$version"* ]]; then
+    echo "VSCode is up to date"
+elif [[ $latest_version == "" ]]; then
+    echo "Failed to get latest version"
+else
+    download_link="${repo_pool}${latest_version}"
+    echo "Downloading $download_link"
+    wget --no-check-certificate -O /tmp/vscode.deb $download_link -q --show-progress &&
+    $SUDO dpkg -i /tmp/vscode.deb &&
+    $SUDO apt install -f -y &&
+    $SUDO rm -f /tmp/vscode.deb
+fi
+
+# install or update edge
+repo_pool="https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/"
+# get latest version
+version=$(test -x "$(command -v microsoft-edge-stable)" && microsoft-edge-stable --version | grep -oP '(\d+\.)+\d+' || echo "0.0.0")
+latest_version=$(curl -s $repo_pool | grep -oP 'microsoft-edge-stable_.*?_amd64\.deb' | sort -V | tail -n 1)
+# version in latest_version string
+echo "Latest version: $latest_version"
+echo "Current version: $version"
+if [[ $latest_version == *"$version"* ]]; then
+    echo "Edge is up to date"
+elif [[ $latest_version == "" ]]; then
+    echo "Failed to get latest version"
+else
+    download_link="${repo_pool}${latest_version}"
+    echo "Downloading $download_link"
+    wget --no-check-certificate -O /tmp/edge.deb $download_link -q --show-progress &&
+    $SUDO dpkg -i /tmp/edge.deb &&
+    $SUDO apt install -f -y &&
+    $SUDO rm -f /tmp/edge.deb
+fi
