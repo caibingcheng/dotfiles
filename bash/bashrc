@@ -140,14 +140,16 @@ export BACKUP_DIR=${HOME}/.backup
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 function roscd() {
-    # >>> fishros initialize >>>
-    echo "ros:foxy(1) noetic(2) ?"
-    read choose
-    case $choose in
-    1) source  /opt/ros/foxy/setup.bash
-    ;;
-    2) source  /opt/ros/noetic/setup.bash
-    ;;
-    esac
-    # <<< fishros initialize <<<
+# >>> fishros initialize >>>
+echo "ros:foxy(1) noetic(2) ?"
+read choose
+case $choose in
+1) source  /opt/ros/foxy/setup.bash;;
+2) source  /opt/ros/noetic/setup.bash;;
+esac
+# <<< fishros initialize <<<
 }
+
+# export PATH="$HOME/.pyenv/bin:$PATH"
+# eval "$(pyenv init --path)"
+# eval "$(pyenv virtualenv-init -)"

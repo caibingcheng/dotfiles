@@ -62,15 +62,15 @@ test -f "$(command -v thefuck)" && eval $(thefuck --alias ff)
 
 function _builtin_cd() {
     builtin cd "$@" &&
-    if [[ -f ".auto.bash" ]]; then
-        source .auto.bash
+    if [[ -f ".autorun" ]]; then
+        source .autorun
     fi
 }
 
 function _zoxide_cd() {
     z "$@" &&
-    if [[ -f ".auto.bash" ]]; then
-        source .auto.bash
+    if [[ -f ".autorun" ]]; then
+        source .autorun
     fi
 }
 

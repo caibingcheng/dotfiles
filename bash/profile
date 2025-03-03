@@ -201,3 +201,6 @@ export -f git_branch
 export -f only_uptime
 . "$HOME/.cargo/env"
 
+export HISTSIZE=10000
+export HISTFILESIZE=1000000
+declare PROMPT_COMMAND="history -a;history -r"
