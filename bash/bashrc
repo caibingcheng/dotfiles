@@ -139,7 +139,7 @@ export BACKUP_DIR=${HOME}/.backup
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
-function roscd() {
+function roschoise() {
 # >>> fishros initialize >>>
 echo "ros:foxy(1) noetic(2) ?"
 read choose
