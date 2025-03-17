@@ -2,7 +2,10 @@
 
 current_dir=$(pwd)
 valid_install_level=(minimal standard)
-config_install_level=minimal
+config_install_level=
+if [[ -f ${HOME}/.dotfiles_install_level ]]; then
+    config_install_level=$(cat ${HOME}/.dotfiles_install_level)
+fi
 if [[ ! -z $1 ]]; then
     if [[ " ${valid_install_level[@]} " =~ " $1 " ]]; then
         config_install_level=$1
@@ -13,6 +16,7 @@ if [[ ! -z $1 ]]; then
     fi
 fi
 echo "Install level: $config_install_level"
+echo $config_install_level >${HOME}/.dotfiles_install_level
 
 # check if dotfiles exists
 if [[ ! -d ${HOME}/.dotfiles ]]; then
@@ -67,10 +71,12 @@ if [[ "$config_install_level" == "minimal" ]]; then
     echo "Minimal install level selected"
     echo "Installing minimal configuration"
     source ${DOTFILES_ROOT}/minimal
-else
+elif [[ "$config_install_level" == "standard" ]]; then
     echo "Standard install level selected"
     echo "Installing standard configuration"
     source ${DOTFILES_ROOT}/standard
+else
+    echo "No level selected, just config dotfiles and nothing to install"
 fi
 
 source ${HOME}/.bashrc
