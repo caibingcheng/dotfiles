@@ -1,0 +1,6 @@
+Hover:
+  ShowAKA: true
+CompileFlags:
+  Remove: [-march=*, -mabi=*]
+Completion:
+  HeaderInsertion: Never

@@ -63,6 +63,9 @@ source ${DOTFILES_ROOT}/bash/setup
 echo "Configuring tmux"
 source ${DOTFILES_ROOT}/tmux/setup
 
+echo "Configuring clang"
+source ${DOTFILES_ROOT}/clang/setup
+
 echo "Configuring os"
 source ${DOTFILES_ROOT}/os/setup
 

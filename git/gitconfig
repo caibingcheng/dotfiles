@@ -6,6 +6,7 @@
 [core]
 	editor = vim
 	excludesfile = ~/.gitignore_global
+	pager = less
 [help]
 	autocorrect = 50
 [filter "lfs"]
