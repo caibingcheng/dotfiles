@@ -7,7 +7,7 @@ Your dotfiles are how you personalize your system. These are mine, configured fo
 Configure bash dotfiles:
 
 ```bash
-curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/bootstrap | bash -s bash
+curl https://raw.githubusercontent.com/caibingcheng/dotfiles/main/bootstrap | bash -s minimal
 ```
 
 ### components

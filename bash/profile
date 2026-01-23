@@ -59,7 +59,15 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 ### bat end
 
 ### pipx
-test "$(command -v pipx)" != "" && eval "$(register-python-argcomplete3 pipx)"
+# register-python-argcomplete3 or register-python-argcomplete depending on the version
+# test "$(command -v pipx)" != "" && eval "$(register-python-argcomplete3 pipx)"
+if test "$(command -v pipx)" != ""; then
+    if command -v register-python-argcomplete3 >/dev/null 2>&1; then
+        eval "$(register-python-argcomplete3 pipx)"
+    elif command -v register-python-argcomplete >/dev/null 2>&1; then
+        eval "$(register-python-argcomplete pipx)"
+    fi
+fi
 test -f "${HOME}/.cargo/env" && source "${HOME}/.cargo/env"
 ### pipx end
 

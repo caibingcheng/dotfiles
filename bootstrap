@@ -66,6 +66,9 @@ source ${DOTFILES_ROOT}/tmux/setup
 echo "Configuring clang"
 source ${DOTFILES_ROOT}/clang/setup
 
+echo "Configuring tealdeer"
+source ${DOTFILES_ROOT}/tealdeer/setup
+
 echo "Configuring os"
 source ${DOTFILES_ROOT}/os/setup
 

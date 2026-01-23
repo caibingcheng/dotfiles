@@ -65,7 +65,7 @@ alias ss="sgpt"
 test -f "$(command -v fzf)" && eval "$(fzf --bash)"
 test -f "$(command -v zoxide)" && eval "$(zoxide init bash)"
 test -f "$(command -v zoxide)" || alias z="cd"
-test -f "$(command -v thefuck)" && eval $(thefuck --alias ff)
+# test -f "$(command -v thefuck)" && eval $(thefuck --alias ff)
 
 function _builtin_cd() {
     builtin cd "$@" &&

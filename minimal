@@ -18,7 +18,7 @@ $SUDO apt install python3 python3-pip python3-venv python3-dev pipx -y
 test -x "$(command -v rustup)" || source ${DOTFILES_ROOT}/rust/install
 
 # install thefuck
-test -x "$(command -v thefuck)" || pipx install thefuck
+# test -x "$(command -v thefuck)" || pipx install thefuck
 
 #install pyenv
 # test -x "$(command -v pyenv)" || "curl https://pyenv.run | bash"
@@ -30,8 +30,14 @@ if [[ "$(command -v brew)" == "" ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
+export HOMEBREW_API_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles/api"
+export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles"
+export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.ustc.edu.cn/brew.git"
+export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.ustc.edu.cn/homebrew-core.git"
+brew update
+
 export HOMEBREW_NO_AUTO_UPDATE=true
-brew bundle --file ${DOTFILES_ROOT}/brew/minimal.brewfile
+brew bundle --file ${DOTFILES_ROOT}/brew/minimal.brewfile install
 
 # tgpt
 test -x "$(command -v tgpt)" || go install github.com/aandrew-me/tgpt/v2@latest
