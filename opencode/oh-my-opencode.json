@@ -1,0 +1,77 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": {
+      "model": "github-copilot/claude-sonnet-4.5",
+      "comment": "The default orchestrator. Plans, delegates, and executes complex tasks using specialized subagents with aggressive parallel execution. Todo-driven workflow with extended thinking (32k budget)."
+    },
+    "oracle": {
+      "model": "github-copilot/gpt-5.2",
+      "variant": "high",
+      "comment": "Architecture decisions, code review, debugging. Read-only consultation - stellar logical reasoning and deep analysis. Inspired by AmpCode."
+    },
+    "librarian": {
+      "model": "github-copilot/gpt-5-mini",
+      "comment": "Multi-repo analysis, documentation lookup, OSS implementation examples. Deep codebase understanding with evidence-based answers. Inspired by AmpCode."
+    },
+    "explore": {
+      "model": "github-copilot/gpt-5-mini",
+      "comment": "Fast codebase exploration and contextual grep. Uses Gemini 3 Flash when Antigravity auth is configured, Haiku when Claude max20 is available, otherwise Grok. Inspired by Claude Code."
+    },
+    "multimodal-looker": {
+      "model": "github-copilot/gemini-3-flash",
+      "comment": "Visual content specialist. Analyzes PDFs, images, diagrams to extract information. Saves tokens by having another agent process media."
+    },
+    "prometheus": {
+      "model": "github-copilot/claude-sonnet-4.5",
+      "variant": "max",
+      "comment": "Strategic planner with interview mode. Creates detailed work plans through iterative questioning."
+    },
+    "metis": {
+      "model": "github-copilot/claude-sonnet-4.5",
+      "variant": "max",
+      "comment": "Plan consultant - pre-planning analysis. Identifies hidden intentions, ambiguities, and AI failure points."
+    },
+    "momus": {
+      "model": "github-copilot/claude-sonnet-4.5",
+      "variant": "medium",
+      "comment": "Plan reviewer - validates plans against clarity, verifiability, and completeness standards."
+    },
+    "atlas": {
+      "model": "github-copilot/gpt-5-mini",
+      "comment": "execute planned tasks systematically."
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "github-copilot/gemini-3-pro",
+      "comment": "Frontend, UI/UX, design, styling, animation"
+    },
+    "ultrabrain": {
+      "model": "github-copilot/gpt-5.2-codex",
+      "variant": "xhigh",
+      "comment": "Deep logical reasoning, complex architecture decisions requiring extensive analysis"
+    },
+    "artistry": {
+      "model": "github-copilot/gemini-3-pro",
+      "variant": "max",
+      "comment": "Highly creative/artistic tasks, novel ideas"
+    },
+    "quick": {
+      "model": "github-copilot/gpt-5-mini",
+      "comment": "Trivial tasks - single file changes, typo fixes, simple modifications"
+    },
+    "unspecified-low": {
+      "model": "github-copilot/claude-sonnet-4.5",
+      "comment": "Tasks that don't fit other categories, low effort required"
+    },
+    "unspecified-high": {
+      "model": "github-copilot/claude-opus-4.5",
+      "comment": "Tasks that don't fit other categories, high effort required"
+    },
+    "writing": {
+      "model": "github-copilot/gpt-5-mini",
+      "comment": "Documentation, prose, technical writing"
+    }
+  }
+}
