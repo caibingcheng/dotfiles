@@ -69,6 +69,9 @@ source ${DOTFILES_ROOT}/clang/setup
 echo "Configuring tealdeer"
 source ${DOTFILES_ROOT}/tealdeer/setup
 
+echo "Configuring opencode"
+source ${DOTFILES_ROOT}/opencode/setup
+
 echo "Configuring os"
 source ${DOTFILES_ROOT}/os/setup
 
