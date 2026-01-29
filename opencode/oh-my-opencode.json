@@ -3,6 +3,7 @@
   "agents": {
     "sisyphus": {
       "model": "github-copilot/claude-sonnet-4.5",
+      "prompt_append": "Output in Chinese as default, unless instructed otherwise.",
       "comment": "The default orchestrator. Plans, delegates, and executes complex tasks using specialized subagents with aggressive parallel execution. Todo-driven workflow with extended thinking (32k budget)."
     },
     "oracle": {

@@ -39,6 +39,9 @@ brew update
 export HOMEBREW_NO_AUTO_UPDATE=true
 brew bundle --file ${DOTFILES_ROOT}/brew/minimal.brewfile install
 
+# tldr
+test -x "$(command -v tldr)" && tldr --update
+
 # tgpt
 test -x "$(command -v tgpt)" || go install github.com/aandrew-me/tgpt/v2@latest
 test -x "$(command -v exa)" || cargo install exa
