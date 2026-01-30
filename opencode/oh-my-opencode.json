@@ -1,5 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "sisyphus_agent": {
+    "default_builder_enabled": true,
+    "planner_enabled": true,
+    "replace_plan": false
+  },
   "agents": {
     "sisyphus": {
       "model": "github-copilot/claude-sonnet-4.5",
