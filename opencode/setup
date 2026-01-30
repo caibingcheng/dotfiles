@@ -6,15 +6,3 @@ mkdir -p ${HOME}/.config/opencode/
 # Link configuration files
 ln -sf ${DOTFILES_ROOT}/opencode/oh-my-opencode.json ${HOME}/.config/opencode/oh-my-opencode.json
 ln -sf ${DOTFILES_ROOT}/opencode/opencode.json ${HOME}/.config/opencode/opencode.json
-
-# Install dependencies if bun is available
-if command -v bun &> /dev/null; then
-    echo "Installing opencode dependencies with bun..."
-    cd ${HOME}/.config/opencode && bun install
-elif command -v npm &> /dev/null; then
-    echo "Installing opencode dependencies with npm..."
-    cd ${HOME}/.config/opencode && npm install
-else
-    echo "Warning: Neither bun nor npm found. Please install dependencies manually."
-    echo "Run: cd ~/.config/opencode && bun install (or npm install)"
-fi
