@@ -41,7 +41,7 @@
       "comment": "Plan consultant - pre-planning analysis. Identifies hidden intentions, ambiguities, and AI failure points."
     },
     "momus": {
-      "model": "github-copilot/gpt-5-mini",
+      "model": "github-copilot/gpt-5.2",
       "comment": "Plan reviewer - validates plans against clarity, verifiability, and completeness standards."
     },
     "atlas": {
