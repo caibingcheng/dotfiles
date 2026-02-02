@@ -4,5 +4,8 @@
 mkdir -p ${HOME}/.config/opencode/
 
 # Link configuration files
-ln -sf ${DOTFILES_ROOT}/opencode/oh-my-opencode.json ${HOME}/.config/opencode/oh-my-opencode.json
+# ln -sf ${DOTFILES_ROOT}/opencode/oh-my-opencode.json ${HOME}/.config/opencode/oh-my-opencode.json
 ln -sf ${DOTFILES_ROOT}/opencode/opencode.json ${HOME}/.config/opencode/opencode.json
+# Link directories
+ln -sf ${DOTFILES_ROOT}/opencode/instructions ${HOME}/.config/opencode/instructions
+
