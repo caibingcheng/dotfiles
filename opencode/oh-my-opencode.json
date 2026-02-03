@@ -1,83 +1,77 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "sisyphus_agent": {
-    "default_builder_enabled": true,
-    "planner_enabled": true,
-    "replace_plan": false
-  },
   "agents": {
     "sisyphus": {
       "model": "github-copilot/gpt-5.2",
-      "variant": "high",
-      "prompt_append": "Output in Chinese as default, unless instructed otherwise.",
-      "comment": "The default orchestrator. Plans, delegates, and executes complex tasks using specialized subagents with aggressive parallel execution. Todo-driven workflow with extended thinking (32k budget)."
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "oracle": {
       "model": "github-copilot/gpt-5.2",
-      "variant": "high",
-      "prompt_append": "Output in Chinese as default, unless instructed otherwise.",
-      "comment": "Architecture decisions, code review, debugging. Read-only consultation - stellar logical reasoning and deep analysis. Inspired by AmpCode."
+      "prompt_append": "Response in Chinese, unless otherwise specified.",
+      "variant": "high"
     },
     "librarian": {
       "model": "github-copilot/gpt-5-mini",
-      "comment": "Multi-repo analysis, documentation lookup, OSS implementation examples. Deep codebase understanding with evidence-based answers. Inspired by AmpCode."
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "explore": {
       "model": "github-copilot/gpt-5-mini",
-      "comment": "Fast codebase exploration and contextual grep. Uses Gemini 3 Flash when Antigravity auth is configured, Haiku when Claude max20 is available, otherwise Grok. Inspired by Claude Code."
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash",
-      "comment": "Visual content specialist. Analyzes PDFs, images, diagrams to extract information. Saves tokens by having another agent process media."
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "prometheus": {
       "model": "github-copilot/gpt-5.2",
-      "variant": "high",
-      "prompt_append": "Output in Chinese as default, unless instructed otherwise.",
-      "comment": "Strategic planner with interview mode. Creates detailed work plans through iterative questioning."
+      "prompt_append": "Response in Chinese, unless otherwise specified.",
+      "variant": "max"
     },
     "metis": {
       "model": "github-copilot/gpt-5.2",
-      "comment": "Plan consultant - pre-planning analysis. Identifies hidden intentions, ambiguities, and AI failure points."
+      "prompt_append": "Response in Chinese, unless otherwise specified.",
+      "variant": "max"
     },
     "momus": {
       "model": "github-copilot/gpt-5.2",
-      "comment": "Plan reviewer - validates plans against clarity, verifiability, and completeness standards."
+      "prompt_append": "Response in Chinese, unless otherwise specified.",
+      "variant": "medium"
     },
     "atlas": {
       "model": "github-copilot/gpt-5.2-codex",
-      "comment": "execute planned tasks systematically."
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "github-copilot/gemini-3-flash",
-      "comment": "Frontend, UI/UX, design, styling, animation"
+      "model": "github-copilot/gemini-3-pro",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "ultrabrain": {
       "model": "github-copilot/gpt-5.2-codex",
-      "variant": "high",
-      "comment": "Deep logical reasoning, complex architecture decisions requiring extensive analysis"
+      "prompt_append": "Response in Chinese, unless otherwise specified.",
+      "variant": "xhigh"
     },
     "artistry": {
-      "model": "github-copilot/gemini-3-flash",
-      "comment": "Highly creative/artistic tasks, novel ideas"
+      "model": "github-copilot/gemini-3-pro",
+      "prompt_append": "Response in Chinese, unless otherwise specified.",
+      "variant": "max"
     },
     "quick": {
       "model": "github-copilot/gpt-5-mini",
-      "comment": "Trivial tasks - single file changes, typo fixes, simple modifications"
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "unspecified-low": {
       "model": "github-copilot/gpt-5-mini",
-      "comment": "Tasks that don't fit other categories, low effort required"
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "unspecified-high": {
-      "model": "github-copilot/gpt-5.2",
-      "comment": "Tasks that don't fit other categories, high effort required"
+      "model": "github-copilot/gpt-5-mini",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "writing": {
-      "model": "github-copilot/gpt-5-mini",
-      "comment": "Documentation, prose, technical writing"
+      "model": "github-copilot/gemini-3-flash",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     }
   }
 }
