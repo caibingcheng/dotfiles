@@ -1,6 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "sisyphus_agent": {
+    "default_builder_enabled": true,
+    "planner_enabled": true,
+    "replace_plan": false
+  },
   "agents": {
+    "OpenCode-Builder": {
+      "model": "github-copilot/gpt-5-mini",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "plan": {
+      "model": "github-copilot/gpt-5.2-mini",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
     "sisyphus": {
       "model": "github-copilot/gpt-5.2",
       "prompt_append": "Response in Chinese, unless otherwise specified."
