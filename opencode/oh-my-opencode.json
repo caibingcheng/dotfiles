@@ -15,7 +15,7 @@
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "sisyphus": {
-      "model": "github-copilot/gpt-5.2",
+      "model": "github-copilot/gpt-5.2-codex",
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "oracle": {
@@ -75,11 +75,11 @@
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "unspecified-low": {
-      "model": "github-copilot/gpt-5-mini",
+      "model": "github-copilot/gpt-5.1-codex-min",
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "unspecified-high": {
-      "model": "github-copilot/gpt-5-mini",
+      "model": "github-copilot/gpt-5.2-codex",
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "writing": {
