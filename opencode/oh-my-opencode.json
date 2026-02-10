@@ -11,7 +11,7 @@
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "plan": {
-      "model": "github-copilot/gpt-5.2-mini",
+      "model": "github-copilot/gpt-5-mini",
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "sisyphus": {
