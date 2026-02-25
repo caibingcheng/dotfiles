@@ -51,6 +51,12 @@
       "prompt_append": "Response in Chinese, unless otherwise specified."
 
       // Fallback Chain: Kimi K2.5 → Claude Sonnet → GPT-5.2 (Todo orchestrator)
+    },
+    "ask": {
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "translate": {
+      "prompt_append": "Response in Chinese, unless otherwise specified."
     }
   },
   "categories": {
