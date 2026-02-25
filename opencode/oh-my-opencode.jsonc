@@ -4,61 +4,87 @@
     "sisyphus": {
       "model": "bailian-coding-plan/kimi-k2.5",
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Claude Opus → Kimi K2.5 → GLM 5 (Claude-family only)
     },
     "oracle": {
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: GPT-5.2 → Gemini 3 Pro → Claude Opus (Read-only high-IQ consultation)
     },
     "librarian": {
       "model": "github-copilot/gpt-5-mini",
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Gemini Flash → MiniMax → GLM (Doc retrieval, fast & cheap)
     },
     "explore": {
       "model": "github-copilot/gpt-5-mini",
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Grok Code Fast → MiniMax → Haiku → GPT-5-Nano (Speed first)
     },
     "multimodal-looker": {
       "model": "github-copilot/gemini-3-flash",
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Kimi K2.5 → Gemini Flash → GPT-5.2 → GLM-4.6v (Multimodal)
     },
     "prometheus": {
       "model": "github-copilot/gpt-5.2",
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Claude Opus → GPT-5.2 → Kimi K2.5 → Gemini 3 Pro (Auto-switches prompt)
     },
     "metis": {
       "model": "bailian-coding-plan/kimi-k2.5",
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Claude Opus → Kimi K2.5 → GPT-5.2 → Gemini 3 Pro (Claude preferred)
     },
     "momus": {
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: GPT-5.2 → Claude Opus → Gemini 3 Pro (Ruthless reviewer)
     },
     "atlas": {
       "prompt_append": "Response in Chinese, unless otherwise specified."
+
+      // Fallback Chain: Kimi K2.5 → Claude Sonnet → GPT-5.2 (Todo orchestrator)
     }
   },
   "categories": {
     "visual-engineering": {
+      // Fallback Chain: Gemini 3 Pro → GLM 5 → Claude Opus (Frontend/UI/Design)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "ultrabrain": {
+      // Fallback Chain: GPT-5.3 Codex → Gemini 3 Pro → Claude Opus (Maximum reasoning)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "deep": {
+      // Fallback Chain: GPT-5.3 Codex → Claude Opus → Gemini 3 Pro (Deep coding/complex logic)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "artistry": {
+      // Fallback Chain: Gemini 3 Pro → Claude Opus → GPT-5.2 (Creative/novel approaches)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "quick": {
+      // Fallback Chain: Claude Haiku → Gemini Flash → GPT-5-Nano (Simple/fast tasks)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "unspecified-low": {
+      // Fallback Chain: Claude Sonnet → GPT-5.3 Codex → Gemini Flash (General standard work)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "unspecified-high": {
+      // Fallback Chain: Claude Opus → GPT-5.2 → Gemini 3 Pro (General complex work)
       "model": "github-copilot/gpt-5.2",
       "prompt_append": "Response in Chinese, unless otherwise specified."
     },
     "writing": {
+      // Fallback Chain: Gemini Flash → Claude Sonnet (Text/docs/prose)
       "prompt_append": "Response in Chinese, unless otherwise specified."
     }
   }
