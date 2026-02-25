@@ -72,7 +72,7 @@ test -f "${HOME}/.cargo/env" && source "${HOME}/.cargo/env"
 ### pipx end
 
 ### brew
-export HOMEBREW_NO_AUTO_UPDATE=true
+# export HOMEBREW_NO_AUTO_UPDATE=true
 test -x /home/linuxbrew/.linuxbrew/bin/brew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 ### brew end
 
