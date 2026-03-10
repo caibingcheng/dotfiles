@@ -7,5 +7,4 @@ mkdir -p ${HOME}/.config/opencode/
 ln -sf ${DOTFILES_ROOT}/opencode/oh-my-opencode.jsonc ${HOME}/.config/opencode/oh-my-opencode.jsonc
 ln -sf ${DOTFILES_ROOT}/opencode/opencode.json ${HOME}/.config/opencode/opencode.json
 # Link directories
-# ln -sf ${DOTFILES_ROOT}/opencode/instructions ${HOME}/.config/opencode/instructions
-
+ln -sf ${DOTFILES_ROOT}/opencode/agents ${HOME}/.config/opencode/agents
