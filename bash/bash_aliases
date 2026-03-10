@@ -2,7 +2,7 @@
 
 alias sba=". ~/.bashrc"
 alias ssba=". ~/.bash_profile"
-alias crc="test -f "$(command -v code)" && code ~/.dotfiles || vim ~/.dotfiles"
+alias crc="command -v code &>/dev/null && code ~/.dotfiles || vim ~/.dotfiles"
 alias dotfiles="${HOME}/.dotfiles/bootstrap"
 
 alias oc="opencode"
@@ -40,10 +40,10 @@ alias gsssu="gsss --untracked-files=no"
 alias gsll="gits log"
 alias gsdd="gits diff"
 
-test -f "$(command -v exa)" && alias ls="exa"
-test -f "$(command -v fd)" && alias fd="fd --hidden --no-ignore "
-test -f "$(command -v fdfind)" && alias fd="fdfind --hidden --no-ignore "
-test -f "$(command -v batcat)" && alias bat="batcat"
+command -v exa &>/dev/null && alias ls="exa"
+command -v fd &>/dev/null && alias fd="fd --hidden --no-ignore "
+command -v fdfind &>/dev/null && alias fd="fdfind --hidden --no-ignore "
+command -v batcat &>/dev/null && alias bat="batcat"
 alias ll="ls -lh"
 alias la="ls -lha"
 alias cls="clear"
@@ -64,10 +64,13 @@ alias gg="gitui"
 alias pp="tgpt"
 alias ss="sgpt"
 
-test -f "$(command -v fzf)" && eval "$(fzf --bash)"
-test -f "$(command -v zoxide)" && eval "$(zoxide init bash)"
-test -f "$(command -v zoxide)" || alias z="cd"
-# test -f "$(command -v thefuck)" && eval $(thefuck --alias ff)
+command -v fzf &>/dev/null && eval "$(fzf --bash)"
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init bash)"
+else
+    alias z="cd"
+fi
+# test -x "$(command -v thefuck)" && eval $(thefuck --alias ff)
 
 function _builtin_cd() {
     builtin cd "$@" &&

@@ -1,2 +1,7 @@
-mkdir -p ${HOME}/.config/tealdeer/
-ln -sf ${DOTFILES_ROOT}/tealdeer/config ${HOME}/.config/tealdeer/config.toml
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+mkdir -p "${HOME}/.config/tealdeer/"
+ln -sf "${DOTFILES_ROOT}/tealdeer/config" "${HOME}/.config/tealdeer/config.toml"

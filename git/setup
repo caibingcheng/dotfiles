@@ -1,28 +1,28 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-function git_check_user() {
-    if [[ "$(git config --global user.name)" == "" || "$(git config --global user.email)" == "" ]]; then
-        return 1
-    fi
-    return 0
+set -euo pipefail
+
+git_check_user() {
+    [[ -n "$(git config --global user.name 2>/dev/null || true)" ]] && \
+    [[ -n "$(git config --global user.email 2>/dev/null || true)" ]]
 }
 
-function git_config_user() {
-    user_name=""
-    user_email=""
-    while [[ "$user_name" == "" ]]; do
-        read -p "    user.name: " user_name
+git_config_user() {
+    local user_name="" user_email=""
+    while [[ -z "${user_name}" ]]; do
+        read -r -p "    user.name: " user_name
     done
-    while [[ "$user_email" == "" ]]; do
-        read -p "    user.email: " user_email
+    while [[ -z "${user_email}" ]]; do
+        read -r -p "    user.email: " user_email
     done
-    git config --global user.name "$user_name"
-    git config --global user.email "$user_email"
+    git config --global user.name "${user_name}"
+    git config --global user.email "${user_email}"
 }
 
-if [[ "$(command -v git)" != "" ]]; then
+if command -v git &>/dev/null; then
     git_check_user || git_config_user
-    ln -sf ${DOTFILES_ROOT}/git/git-completion.bash ${HOME}/.git-completion.bash
-    ln -sf ${DOTFILES_ROOT}/git/gitconfig ${HOME}/.gitconfig
-    ln -sf ${DOTFILES_ROOT}/git/gitignore_global ${HOME}/.gitignore_global
+    ln -sf "${DOTFILES_ROOT}/git/git-completion.bash" "${HOME}/.git-completion.bash"
+    ln -sf "${DOTFILES_ROOT}/git/gitconfig" "${HOME}/.gitconfig"
+    ln -sf "${DOTFILES_ROOT}/git/gitignore_global" "${HOME}/.gitignore_global"
 fi

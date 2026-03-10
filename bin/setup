@@ -1,17 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-mkdir -p "${HOME}/bin"
+set -euo pipefail
 
-ln -sf ${DOTFILES_ROOT}/bin/sf ${HOME}/bin/sf
-ln -sf ${DOTFILES_ROOT}/bin/sip ${HOME}/bin/sip
-ln -sf ${DOTFILES_ROOT}/bin/cip ${HOME}/bin/cip
-ln -sf ${DOTFILES_ROOT}/bin/essh ${HOME}/bin/essh
-ln -sf ${DOTFILES_ROOT}/bin/escp ${HOME}/bin/escp
-ln -sf ${DOTFILES_ROOT}/bin/backup ${HOME}/bin/backup
-ln -sf ${DOTFILES_ROOT}/bin/freebuffercache ${HOME}/bin/freebuffercache
-ln -sf ${DOTFILES_ROOT}/bin/paint ${HOME}/bin/paint
-ln -sf ${DOTFILES_ROOT}/bin/xyz ${HOME}/bin/xyz
-ln -sf ${DOTFILES_ROOT}/bin/pyico ${HOME}/bin/pyico
-ln -sf ${DOTFILES_ROOT}/bin/bb ${HOME}/bin/bb
-ln -sf ${DOTFILES_ROOT}/bin/repo_stats ${HOME}/bin/repo_stats
+source "${DOTFILES_ROOT}/lib/common.sh" 2>/dev/null || true
+
+ensure_dir "${HOME}/bin"
+
+for script in sf sip cip essh escp backup freebuffercache paint xyz pyico bb repo_stats; do
+    safe_link "${DOTFILES_ROOT}/bin/${script}" "${HOME}/bin/${script}"
+done
 
