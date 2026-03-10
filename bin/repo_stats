@@ -1,0 +1,91 @@
+#!/bin/bash
+# A script to show contributor statistics for a git repository
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+usage() {
+  echo "Usage: repo_stats [-h] [-n NUM] [REPO_PATH]"
+  echo ""
+  echo "Show contributor statistics for a git repository"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help    Show this help message"
+  echo "  -n NUM        Show top N contributors (default: all)"
+  echo ""
+  echo "Arguments:"
+  echo "  REPO_PATH     Path to the git repository (default: current directory)"
+  exit 0
+}
+
+REPO_PATH="."
+TOP_N=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      ;;
+    -n)
+      TOP_N="$2"
+      shift 2
+      ;;
+    *)
+      REPO_PATH="$1"
+      shift
+      ;;
+  esac
+done
+
+# Check if it is a git repository
+if ! git -C "${REPO_PATH}" rev-parse --git-dir &>/dev/null 2>&1; then
+  echo "Error: ${REPO_PATH} is not a git repository"
+  exit 1
+fi
+
+REPO_DIR="$(git -C "${REPO_PATH}" rev-parse --show-toplevel)"
+REMOTE_URL="$(git -C "${REPO_DIR}" remote get-url origin 2>/dev/null || echo "${REPO_DIR}")"
+BRANCH="$(git -C "${REPO_DIR}" rev-parse --abbrev-ref HEAD)"
+TOTAL_COMMITS="$(git -C "${REPO_DIR}" rev-list --count HEAD 2>/dev/null || echo "0")"
+
+echo "Repository: ${REMOTE_URL}"
+echo "Branch:     ${BRANCH}"
+echo "Commits:    ${TOTAL_COMMITS}"
+echo ""
+
+if [ "${TOTAL_COMMITS}" -eq 0 ]; then
+  echo "No commits found"
+  exit 0
+fi
+
+printf "%-40s %8s %10s %10s\n" "Author" "Commits" "Added" "Removed"
+echo "------------------------------------------------------------------------"
+
+# Collect per-author stats in one pass using git log with numstat
+STATS="$(git -C "${REPO_DIR}" log --numstat --format="COMMIT %aN" | awk '
+  /^COMMIT / {
+    author = substr($0, 8)
+    commits[author]++
+    next
+  }
+  $1 ~ /^[0-9]+$/ {
+    added[author] += $1
+    removed[author] += $2
+  }
+  END {
+    for (a in commits) {
+      printf "%d\t%s\t%d\t%d\n", commits[a], a, added[a]+0, removed[a]+0
+    }
+  }
+' | sort -rn)"
+
+# Limit to top N if specified
+if [ -n "${TOP_N}" ]; then
+  STATS="$(echo "${STATS}" | head -n "${TOP_N}")"
+fi
+
+# Print formatted results
+echo "${STATS}" | while IFS=$'\t' read -r commits author added removed; do
+  [ -n "${commits}" ] && printf "%-40s %8d %10d %10d\n" "${author}" "${commits}" "${added}" "${removed}"
+done
