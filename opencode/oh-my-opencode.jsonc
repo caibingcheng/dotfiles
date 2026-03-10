@@ -36,14 +36,6 @@
     "atlas": {
       "model": "github-copilot/claude-sonnet-4.6",
       "prompt_append": "Response in Chinese, unless otherwise specified."
-    },
-    "ask": {
-      "model": "github-copilot/gpt-4.1",
-      "prompt_append": "Response in Chinese, unless otherwise specified."
-    },
-    "translate": {
-      "model": "github-copilot/gpt-4.1",
-      "prompt_append": "Response in Chinese, unless otherwise specified."
     }
   },
   "categories": {
