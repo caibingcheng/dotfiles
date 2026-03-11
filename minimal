@@ -21,7 +21,14 @@ update_github_hosts() {
         fi
     fi
 
-    ${SUDO} bash -c "grep -v github /etc/hosts > /tmp/hosts_tmp && cat '${tmp_hosts}' >> /tmp/hosts_tmp && cp /tmp/hosts_tmp /etc/hosts && rm -f /tmp/hosts_tmp"
+    ${SUDO} bash -c '
+        set -euo pipefail
+        tmp_hosts_tmp="$(mktemp)"
+        trap "rm -f \"$tmp_hosts_tmp\"" EXIT
+        grep -v github /etc/hosts >"$tmp_hosts_tmp"
+        cat "$1" >>"$tmp_hosts_tmp"
+        cp "$tmp_hosts_tmp" /etc/hosts
+    ' bash "${tmp_hosts}"
 }
 
 # Install base packages
