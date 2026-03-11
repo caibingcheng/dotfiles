@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# fzf-apt: Interactive package manager
+# Usage: fzf-apt [action]
+#   install     Install packages
+#   remove      Remove packages
+#   purge       Purge packages
+#   search      Search packages
+
+set -euo pipefail
+
+show_help() {
+    cat <<EOF
+Interactive apt package manager using fzf
+
+Usage: $(basename "$0") [ACTION]
+
+Actions:
+    install     Search and install packages
+    remove      List and remove installed packages
+    purge       List and purge installed packages (remove + config)
+    search      Search for packages
+    autoremove  Remove automatically installed packages
+
+Examples:
+    $(basename "$0") install        # Interactive package installation
+    $(basename "$0") remove         # Interactive package removal
+    $(basename "$0") search         # Search all packages
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+    show_help
+    exit 1
+fi
+
+action="$1"
+
+# Check for sudo
+if [[ $EUID -ne 0 && -z "${SUDO:-}" ]]; then
+    if command -v sudo &>/dev/null; then
+        SUDO="sudo"
+    else
+        echo "Error: sudo is required" >&2
+        exit 1
+    fi
+fi
+
+case "$action" in
+    install)
+        echo "Loading package list..."
+        selected=$(apt-cache search . 2>/dev/null | fzf --multi \
+            --prompt="Search packages to install > " \
+            --preview "apt-cache show {1} 2>/dev/null | head -20" \
+            --preview-window=right:50%:wrap \
+            --header="TAB: Select multiple | Enter: Install | Ctrl-C: Cancel" \
+            --bind 'ctrl-a:select-all')
+        
+        [[ -z "$selected" ]] && exit 0
+        
+        packages=$(echo "$selected" | awk '{print $1}')
+        echo ""
+        echo "Packages to install:"
+        echo "$packages"
+        echo ""
+        read -p "Continue? [y/N] " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "$packages" | xargs -r $SUDO apt install -y
+        fi
+        ;;
+    
+    remove)
+        echo "Loading installed packages..."
+        selected=$(dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\t${Status}\n' 2>/dev/null | \
+            grep "install ok installed" | \
+            awk -F'\t' '{printf "%-40s %20s %10s\n", $1, $2, $3}' | \
+            fzf --multi --header-lines=0 \
+            --prompt="Select packages to remove > " \
+            --preview "apt-cache show {1} 2>/dev/null | head -20" \
+            --preview-window=right:50%:wrap \
+            --header="TAB: Select multiple | Enter: Remove | Ctrl-C: Cancel" \
+            --bind 'ctrl-a:select-all')
+        
+        [[ -z "$selected" ]] && exit 0
+        
+        packages=$(echo "$selected" | awk '{print $1}')
+        echo ""
+        echo "Packages to remove:"
+        echo "$packages"
+        echo ""
+        read -p "Continue? [y/N] " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "$packages" | xargs -r $SUDO apt remove -y
+        fi
+        ;;
+    
+    purge)
+        echo "Loading installed packages..."
+        selected=$(dpkg-query -W -f='${Package}\t${Version}\t${Status}\n' 2>/dev/null | \
+            grep "install ok installed" | \
+            awk -F'\t' '{printf "%-40s %20s\n", $1, $2}' | \
+            fzf --multi \
+            --prompt="Select packages to purge > " \
+            --preview "apt-cache show {1} 2>/dev/null | head -20" \
+            --preview-window=right:50%:wrap \
+            --header="TAB: Select multiple | Enter: Purge | Ctrl-C: Cancel")
+        
+        [[ -z "$selected" ]] && exit 0
+        
+        packages=$(echo "$selected" | awk '{print $1}')
+        echo ""
+        echo "Packages to purge (remove + config files):"
+        echo "$packages"
+        echo ""
+        read -p "Continue? [y/N] " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "$packages" | xargs -r $SUDO apt purge -y
+        fi
+        ;;
+    
+    search)
+        echo "Loading package list..."
+        selected=$(apt-cache search . 2>/dev/null | fzf \
+            --prompt="Search packages > " \
+            --preview "apt-cache show {1} 2>/dev/null" \
+            --preview-window=right:60%:wrap \
+            --bind "enter:execute(apt-cache show {1} | less -R)")
+        ;;
+    
+    autoremove)
+        echo "Packages to be autoremoved:"
+        apt-get --dry-run autoremove 2>&1 | grep "^Remv"
+        echo ""
+        read -p "Remove these packages? [y/N] " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            $SUDO apt autoremove -y
+        fi
+        ;;
+    
+    -h|--help|help)
+        show_help
+        exit 0
+        ;;
+    
+    *)
+        echo "Unknown action: $action"
+        show_help
+        exit 1
+        ;;
+esac

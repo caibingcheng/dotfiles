@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# fzf-git-branch: Interactive git branch selector
+# Usage: fzf-git-branch [options]
+#   -a, --all       Show all branches (local and remote)
+#   -d, --delete    Delete selected branches
+#   -m, --merge     Merge selected branch into current
+
+set -euo pipefail
+
+show_all=false
+delete_mode=false
+merge_mode=false
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -a|--all) show_all=true; shift ;;
+        -d|--delete) delete_mode=true; shift ;;
+        -m|--merge) merge_mode=true; shift ;;
+        -h|--help)
+            echo "Usage: fzf-git-branch [options]"
+            echo ""
+            echo "Options:"
+            echo "  -a, --all       Show all branches (local and remote)"
+            echo "  -d, --delete    Delete selected branches (multiple selection)"
+            echo "  -m, --merge     Merge selected branch into current"
+            echo "  -h, --help      Show this help message"
+            exit 0
+            ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# Check if we're in a git repo
+if ! git rev-parse --git-dir &>/dev/null; then
+    echo "Error: Not in a git repository" >&2
+    exit 1
+fi
+
+current_branch=$(git branch --show-current)
+
+if [[ "$show_all" == true ]]; then
+    branches=$(git branch -a --format="%(refname:short) %(committerdate:relative) %(subject)" | grep -v HEAD)
+else
+    branches=$(git branch --format="%(refname:short) %(committerdate:relative) %(subject)")
+fi
+
+# Build preview command
+preview_cmd='echo "Branch: {1}
+
+Last commit: {2}
+
+Message: {3}
+
+Commits ahead/behind:" && 
+    git log --oneline --graph --left-right --merge $(git branch --show-current)...{1} -- 2>/dev/null | head -20 ||
+    git log --oneline {1}~5..{1} 2>/dev/null | head -10'
+
+if [[ "$delete_mode" == true ]]; then
+    # Multi-select mode for deletion
+    selected=$(echo "$branches" | grep -v "^\*" | fzf --multi --ansi \
+        --prompt="Select branches to delete (TAB to multi-select) > " \
+        --preview "$preview_cmd" \
+        --header="Current: $current_branch | CTRL-D: Delete | CTRL-A: Select All | ESC: Cancel")
+    
+    [[ -z "$selected" ]] && exit 0
+    
+    echo ""
+    echo "Selected branches to delete:"
+    echo "$selected" | awk '{print "  - " $1}'
+    echo ""
+    read -p "Confirm deletion? [y/N] " -n 1 -r
+    echo ""
+    
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "$selected" | awk '{print $1}' | while read -r branch; do
+            if [[ "$branch" == origin/* ]]; then
+                remote=${branch%%/*}
+                remote_branch=${branch#*/}
+                git push "$remote" --delete "$remote_branch"
+            else
+                git branch -D "$branch"
+            fi
+        done
+    fi
+elif [[ "$merge_mode" == true ]]; then
+    # Single select for merge
+    selected=$(echo "$branches" | grep -v "^\*" | fzf --ansi \
+        --prompt="Select branch to merge into $current_branch > " \
+        --preview "$preview_cmd" \
+        --header="Current: $current_branch")
+    
+    [[ -z "$selected" ]] && exit 0
+    
+    branch=$(echo "$selected" | awk '{print $1}')
+    echo ""
+    echo "Merging $branch into $current_branch..."
+    git merge "$branch"
+else
+    # Checkout mode (default)
+    selected=$(echo "$branches" | fzf --ansi \
+        --prompt="Select branch > " \
+        --preview "$preview_cmd" \
+        --header="Current: $current_branch | Enter: Checkout")
+    
+    [[ -z "$selected" ]] && exit 0
+    
+    branch=$(echo "$selected" | awk '{print $1}')
+    
+    if [[ "$branch" == "*"* ]]; then
+        echo "Already on branch: $current_branch"
+    elif [[ "$branch" == origin/* ]]; then
+        # Remote branch - create local tracking branch
+        local_branch=${branch#origin/}
+        git checkout -b "$local_branch" --track "$branch"
+    else
+        git checkout "$branch"
+    fi
+fi

@@ -1,0 +1,91 @@
+# Direnv configuration file
+# https://direnv.net/man/direnv-stdlib.1.html
+
+# 布局函数：Python 虚拟环境
+layout_python() {
+    local python=${1:-python3}
+    local venv_dir="${PWD}/.venv"
+    
+    if [[ ! -d "$venv_dir" ]]; then
+        log_status "creating virtual environment"
+        $python -m venv "$venv_dir"
+    fi
+    
+    export VIRTUAL_ENV="$venv_dir"
+    PATH_add "$venv_dir/bin"
+}
+
+# 布局函数：Node.js (使用 nvm 或 fnm)
+layout_node() {
+    export NODE_VERSION="${1:-lts/*}"
+    
+    if command -v fnm &>/dev/null; then
+        eval "$(fnm env)"
+        fnm use "$NODE_VERSION" 2>/dev/null || fnm install "$NODE_VERSION"
+    elif [[ -s "$HOME/.nvm/nvm.sh" ]]; then
+        source "$HOME/.nvm/nvm.sh"
+        nvm use "$NODE_VERSION" 2>/dev/null || nvm install "$NODE_VERSION"
+    fi
+}
+
+# 布局函数：Rust
+layout_rust() {
+    if [[ -f "Cargo.toml" ]]; then
+        # 自动识别目标目录
+        export CARGO_TARGET_DIR="${PWD}/target"
+    fi
+}
+
+# 布局函数：Go
+layout_go() {
+    local go_version="${1:-1.21}"
+    
+    if command -v go &>/dev/null; then
+        export GOPATH="${PWD}/.go"
+        export GOBIN="${GOPATH}/bin"
+        PATH_add "$GOBIN"
+    fi
+}
+
+# 布局函数：通用开发环境
+layout_dev() {
+    # 添加本地 bin 目录
+    if [[ -d "${PWD}/bin" ]]; then
+        PATH_add "${PWD}/bin"
+    fi
+    
+    # 添加本地 scripts 目录
+    if [[ -d "${PWD}/scripts" ]]; then
+        PATH_add "${PWD}/scripts"
+    fi
+    
+    # 添加本地 vendor bin 目录
+    if [[ -d "${PWD}/vendor/bin" ]]; then
+        PATH_add "${PWD}/vendor/bin"
+    fi
+}
+
+# 环境变量增强
+export_env() {
+    # 设置编辑器
+    if [[ -z "${EDITOR:-}" ]]; then
+        export EDITOR="code --wait"
+    fi
+    
+    # 设置分页器
+    if command -v bat &>/dev/null; then
+        export PAGER="bat --paging=always"
+    fi
+}
+
+# 自动加载 .env 文件（如果存在）
+load_env() {
+    if [[ -f "${PWD}/.env" ]]; then
+        dotenv
+    fi
+}
+
+# 默认执行
+layout_dev
+export_env
+load_env

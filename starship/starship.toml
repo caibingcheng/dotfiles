@@ -1,0 +1,156 @@
+# Starship configuration
+# https://starship.rs/config/
+
+# 全局配置
+add_newline = true
+format = """$all"""
+
+# 字符配置
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[✗](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+vimcmd_visual_symbol = "[❮](bold yellow)"
+vimcmd_replace_symbol = "[❮](bold purple)"
+vimcmd_replace_one_symbol = "[❮](bold purple)"
+
+# 目录配置
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+read_only = " 🔒"
+read_only_style = "red"
+home_symbol = "🏠"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+# Git 分支配置
+[git_branch]
+symbol = "🌱 "
+truncation_length = 4
+truncation_symbol = ""
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+# Git 状态配置
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+conflicted = "🏳"
+ahead = "🏎💨"
+behind = "😰"
+diverged = "😵"
+up_to_date = "✓"
+untracked = "🤷"
+stashed = "📦"
+modified = "📝"
+staged = '[++\($count\)](green)'
+renamed = "👅"
+deleted = "🗑"
+
+# 语言配置
+[python]
+symbol = "🐍 "
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+pyenv_version_name = true
+
+[nodejs]
+symbol = "⬢ "
+format = "[$symbol($version )]($style)"
+
+[rust]
+symbol = "⚙️ "
+format = "[$symbol($version )]($style)"
+
+[golang]
+symbol = "🐹 "
+format = "[$symbol($version )]($style)"
+
+[package]
+symbol = "📦 "
+format = "[$symbol($version )]($style)"
+
+# 时间配置
+[time]
+disabled = false
+format = "[$time]($style) "
+time_format = "%T"
+style = "bold yellow"
+
+# 命令执行时间
+[cmd_duration]
+format = "⏱ [$duration]($style) "
+min_time = 2_000
+style = "yellow"
+
+# 内存使用
+[memory_usage]
+symbol = "🐏 "
+disabled = true
+format = "$symbol[$ram( | $swap)]($style) "
+
+# 用户名
+[username]
+style_user = "blue bold"
+style_root = "red bold"
+format = "[$user]($style) "
+disabled = false
+show_always = false
+
+# 主机名
+[hostname]
+ssh_only = false
+format = "on [$hostname](bold red) "
+trim_at = "."
+disabled = false
+
+# 环境变量
+[env_var.SHELL]
+variable = "SHELL"
+default = "unknown shell"
+format = "[$env_value]($style) "
+
+# 容器检测
+[container]
+format = "[$symbol [$name]]($style) "
+
+# sudo
+[sudo]
+disabled = false
+format = "[$symbol]($style)"
+symbol = "🧙 "
+
+# 电池
+[battery]
+full_symbol = "🔋"
+charging_symbol = "⚡️"
+discharging_symbol = "💀"
+format = "[$symbol$percentage]($style) "
+
+[[battery.display]]
+threshold = 10
+style = "bold red"
+
+[[battery.display]]
+threshold = 30
+style = "bold yellow"
+disabled = false
+
+# 工具版本管理器
+[java]
+symbol = "☕ "
+format = "[$symbol($version )]($style)"
+
+[docker_context]
+symbol = "🐳 "
+format = "[$symbol$context]($style) "
+
+[terraform]
+symbol = "💠 "
+format = "[$symbol$workspace]($style) "
+
+[kubernetes]
+symbol = "☸ "
+format = '[$symbol$context( \($namespace\))]($style) '
+disabled = true
+
+# 行编辑器
+[line_break]
+disabled = false

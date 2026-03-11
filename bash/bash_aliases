@@ -145,8 +145,6 @@ _swap() {
 }
 alias swap='_swap'
 
-alias ntpon="timedatectl set-ntp yes"
-alias ntpoff="timedatectl set-ntp no"
 alias makearm="make CROSS_COMPILE=aarch64-linux-gnu-"
 alias netrestart="sudo systemctl restart NetworkManager.service"
 

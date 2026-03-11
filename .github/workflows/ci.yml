@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-bootstrap:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        level: [minimal]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test bootstrap script
+        run: |
+          # Create a minimal test environment
+          export CI=true
+          export DEBIAN_FRONTEND=noninteractive
+          export DOTFILES_TEST_MODE=1
+          
+          # Test the bootstrap script with --config-only
+          chmod +x bootstrap
+          ./bootstrap --config-only
+          
+      - name: Verify dotfiles structure
+        run: |
+          # Check that expected directories exist
+          test -d bash
+          test -d bin
+          test -d git
+          test -d tmux
+          test -d starship
+          test -d direnv
+          test -d fzf
+          test -d aider
+          test -d docker
+          
+      - name: Test shell scripts syntax
+        run: |
+          # Check bash scripts for syntax errors
+          find . -name "*.sh" -o -name "setup" -o -name "install" | \
+            grep -v ".git" | while read script; do
+            if [ -f "$script" ]; then
+              bash -n "$script" || exit 1
+            fi
+          done
+          
+          # Check all executable files with bash syntax
+          find bin -type f -executable | while read script; do
+            bash -n "$script" || exit 1
+          done
+
+      - name: Test bootstrap help
+        run: |
+          ./bootstrap --help
+
+  lint-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run shellcheck
+        run: |
+          # Run shellcheck on all bash scripts
+          find . -name "*.sh" -o -name "*.bash" | grep -v ".git" | while read script; do
+            if [ -f "$script" ]; then
+              shellcheck -e SC1090,SC1091 "$script" || true
+            fi
+          done
+          
+          # Check specific scripts
+          shellcheck -e SC1090,SC1091 bootstrap || true
+          shellcheck -e SC1090,SC1091 minimal || true
+          shellcheck -e SC1090,SC1091 standard || true
+
+  check-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check README exists
+        run: |
+          test -f README.md
+          test -s README.md
+
+      - name: Check documentation
+        run: |
+          # Verify key files are documented or exist
+          test -d bash && echo "✓ bash config"
+          test -d bin && echo "✓ bin scripts"
+          test -d git && echo "✓ git config"
+          test -f bootstrap && echo "✓ bootstrap script"

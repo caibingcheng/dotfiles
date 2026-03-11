@@ -157,3 +157,23 @@ export EDITOR="vim"
 
 # opencode
 export PATH=/home/bing/.opencode/bin:$PATH
+
+# Docker aliases
+if [ -f ~/.docker_aliases ]; then
+    . ~/.docker_aliases
+fi
+
+# Starship prompt
+eval "$(starship init bash)"
+
+# Direnv hook
+eval "$(direnv hook bash)"
+
+# FZF PATH
+export PATH="${HOME}/.fzf/bin:${PATH}"
+
+# FZF bash integration
+eval "$(fzf --bash)"
+
+# FZF default options
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline"

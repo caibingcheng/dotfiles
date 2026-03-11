@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# fzf-history: Enhanced shell history search
+# Usage: fzf-history [options]
+
+set -euo pipefail
+
+show_help() {
+    cat <<EOF
+Enhanced shell history search using fzf
+
+Usage: $(basename "$0") [OPTIONS]
+
+Options:
+    -e, --edit      Edit selected command before executing
+    -c, --copy      Copy selected command to clipboard
+    -d, --delete    Delete selected history entries
+    -n, --dry-run   Show command without executing
+    -h, --help      Show this help message
+
+Key bindings in fzf:
+    Enter        Execute command
+    Ctrl-E       Edit command
+    Ctrl-C       Copy command to clipboard
+    Ctrl-D       Delete history entry
+    Ctrl-Y       Same as Enter (for muscle memory)
+EOF
+}
+
+edit_mode=false
+copy_mode=false
+delete_mode=false
+dry_run=false
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -e|--edit) edit_mode=true; shift ;;
+        -c|--copy) copy_mode=true; shift ;;
+        -d|--delete) delete_mode=true; shift ;;
+        -n|--dry-run) dry_run=true; shift ;;
+        -h|--help) show_help; exit 0 ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# Build history file
+case "$SHELL" in
+    */bash)
+        history_file="$HOME/.bash_history"
+        ;;
+    */zsh)
+        history_file="$HOME/.zsh_history"
+        ;;
+    *)
+        history_file="$HOME/.bash_history"
+        ;;
+esac
+
+# Read and deduplicate history
+if [[ -f "$history_file" ]]; then
+    history_data=$(tac "$history_file" 2>/dev/null | awk '!seen[$0]++' | head -10000)
+else
+    history_data=$(history | tac | awk '!seen[$0]++' | head -10000)
+fi
+
+# Check if we have fzf
+if ! command -v fzf &>/dev/null; then
+    echo "Error: fzf not found. Please install fzf first." >&2
+    exit 1
+fi
+
+# Select from history
+selected=$(echo "$history_data" | fzf --tac \
+    --prompt="History > " \
+    --header="Enter: Execute | Ctrl-E: Edit | Ctrl-C: Copy | Ctrl-D: Delete" \
+    --bind "ctrl-e:execute-silent(echo -n {} > /tmp/fzf_history_selection)+abort" \
+    --bind "ctrl-c:execute-silent(echo -n {} | xclip -selection clipboard 2>/dev/null || echo -n {} | pbcopy 2>/dev/null || echo -n {} > /tmp/fzf_history_clipboard)+abort" \
+    --bind "ctrl-d:execute-silent(echo -n {} > /tmp/fzf_history_delete)+abort" \
+    --bind "ctrl-y:accept")
+
+# Handle deletion
+if [[ -f /tmp/fzf_history_delete ]]; then
+    cmd_to_delete=$(cat /tmp/fzf_history_delete)
+    rm -f /tmp/fzf_history_delete
+    
+    if [[ -f "$history_file" ]]; then
+        # Remove from history file
+        grep -vFx "$cmd_to_delete" "$history_file" > /tmp/history_temp
+        mv /tmp/history_temp "$history_file"
+        echo "Deleted from history: $cmd_to_delete"
+    fi
+    exit 0
+fi
+
+# Handle copy
+if [[ -f /tmp/fzf_history_clipboard ]]; then
+    cmd_copied=$(cat /tmp/fzf_history_clipboard)
+    rm -f /tmp/fzf_history_clipboard
+    echo "Copied to clipboard: $cmd_copied"
+    exit 0
+fi
+
+# Handle edit
+if [[ -f /tmp/fzf_history_selection ]]; then
+    cmd_to_edit=$(cat /tmp/fzf_history_selection)
+    rm -f /tmp/fzf_history_selection
+    
+    # Edit using default editor
+    editor="${EDITOR:-vi}"
+    tmpfile=$(mktemp)
+    echo "$cmd_to_edit" > "$tmpfile"
+    $editor "$tmpfile"
+    selected=$(cat "$tmpfile")
+    rm -f "$tmpfile"
+fi
+
+# Exit if nothing selected
+if [[ -z "$selected" ]]; then
+    exit 0
+fi
+
+# Handle dry run
+if [[ "$dry_run" == true ]]; then
+    echo "Would execute: $selected"
+    exit 0
+fi
+
+# Copy to clipboard if requested
+if [[ "$copy_mode" == true ]]; then
+    echo "$selected" | xclip -selection clipboard 2>/dev/null || \
+    echo "$selected" | pbcopy 2>/dev/null || \
+    echo "$selected" > /tmp/fzf_history_copied
+    echo "Copied: $selected"
+    exit 0
+fi
+
+# Execute the command
+echo "Executing: $selected"
+echo ""
+eval "$selected"

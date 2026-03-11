@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh"
+
+log_info "Configuring direnv..."
+
+# Install direnv if not present
+DIRENV_INSTALLED=false
+if ! command_exists direnv; then
+    log_info "Installing direnv..."
+    
+    # Priority 1: Homebrew
+    if has_brew; then
+        log_info "Installing direnv via Homebrew..."
+        if brew_install direnv 2>/dev/null; then
+            DIRENV_INSTALLED=true
+            log_info "Direnv installed via Homebrew"
+        else
+            log_warn "Failed to install direnv via Homebrew"
+        fi
+    fi
+    
+    # Priority 2: Cargo (build from source)
+    if [[ "$DIRENV_INSTALLED" != true ]] && command_exists cargo; then
+        log_info "Installing direnv via Cargo..."
+        if cargo install direnv 2>/dev/null; then
+            DIRENV_INSTALLED=true
+            log_info "Direnv installed via Cargo"
+        else
+            log_warn "Failed to install direnv via Cargo"
+        fi
+    fi
+    
+    # Priority 3: GitHub releases (pre-built binary)
+    if [[ "$DIRENV_INSTALLED" != true ]]; then
+        log_info "Installing direnv from GitHub releases..."
+        if curl -sfL https://direnv.net/install.sh | bash 2>/dev/null; then
+            DIRENV_INSTALLED=true
+            log_info "Direnv installed from GitHub releases"
+        else
+            log_warn "Failed to install direnv from GitHub, skipping..."
+        fi
+    fi
+else
+    DIRENV_INSTALLED=true
+fi
+
+# Skip configuration if installation failed
+if [[ "$DIRENV_INSTALLED" != true ]]; then
+    log_warn "Direnv installation failed, skipping configuration"
+    exit 0
+fi
+
+# Link direnvrc
+safe_link "${DOTFILES_ROOT}/direnv/direnvrc" "${HOME}/.direnvrc"
+
+# Add direnv hook to bashrc
+if ! grep -q "direnv hook bash" "${HOME}/.bashrc" 2>/dev/null; then
+    log_info "Adding direnv hook to .bashrc..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# Direnv hook' >> "${HOME}/.bashrc"
+    echo 'eval "$(direnv hook bash)"' >> "${HOME}/.bashrc"
+fi
+
+# Add direnv whitelist for common directories
+ensure_dir "${HOME}/.config/direnv"
+
+log_info "Direnv configuration complete!"
+log_info "Usage: Create .envrc files in project directories"

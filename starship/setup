@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh"
+
+log_info "Configuring starship..."
+
+# Install starship if not present
+STARSHIP_INSTALLED=false
+if ! command_exists starship; then
+    log_info "Installing starship..."
+    
+    # Priority 1: Homebrew
+    if has_brew; then
+        log_info "Installing starship via Homebrew..."
+        if brew_install starship 2>/dev/null; then
+            STARSHIP_INSTALLED=true
+            log_info "Starship installed via Homebrew"
+        else
+            log_warn "Failed to install starship via Homebrew"
+        fi
+    fi
+    
+    # Priority 2: Cargo (if Rust is available)
+    if [[ "$STARSHIP_INSTALLED" != true ]] && command_exists cargo; then
+        log_info "Installing starship via Cargo..."
+        if cargo install starship 2>/dev/null; then
+            STARSHIP_INSTALLED=true
+            log_info "Starship installed via Cargo"
+        else
+            log_warn "Failed to install starship via Cargo"
+        fi
+    fi
+    
+    # Priority 3: Official install script
+    if [[ "$STARSHIP_INSTALLED" != true ]]; then
+        log_info "Installing starship via official script..."
+        if curl -sS https://starship.rs/install.sh | sh -s -- --yes 2>/dev/null; then
+            STARSHIP_INSTALLED=true
+            log_info "Starship installed via official script"
+        else
+            log_warn "Failed to install starship"
+        fi
+    fi
+else
+    STARSHIP_INSTALLED=true
+fi
+
+# Skip configuration if installation failed
+if [[ "$STARSHIP_INSTALLED" != true ]]; then
+    log_warn "Starship installation failed, skipping configuration"
+    exit 0
+fi
+
+# Create config directory
+ensure_dir "${HOME}/.config"
+
+# Link starship config
+safe_link "${DOTFILES_ROOT}/starship/starship.toml" "${HOME}/.config/starship.toml"
+
+# Add starship init to shell configs
+if ! grep -q "starship init bash" "${HOME}/.bashrc" 2>/dev/null; then
+    log_info "Adding starship to .bashrc..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# Starship prompt' >> "${HOME}/.bashrc"
+    echo 'eval "$(starship init bash)"' >> "${HOME}/.bashrc"
+fi
+
+log_info "Starship configuration complete!"
