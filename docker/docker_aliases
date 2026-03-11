@@ -26,7 +26,7 @@ alias dcd='docker compose down'
 alias dcr='docker compose restart'
 alias dcb='docker compose build'
 alias dcl='docker compose logs -f'
-alias dcp='docker compose pull'
+alias dcpull='docker compose pull'
 alias dce='docker compose exec'
 alias dcs='docker compose ps'
 

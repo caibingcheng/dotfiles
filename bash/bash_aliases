@@ -149,3 +149,9 @@ alias makearm="make CROSS_COMPILE=aarch64-linux-gnu-"
 alias netrestart="sudo systemctl restart NetworkManager.service"
 
 alias br="bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so make -j12"
+
+# Aider aliases
+alias ai='aider'
+alias ais='aider --stream'
+alias aic='aider --commit'
+alias aia='aider --architect'

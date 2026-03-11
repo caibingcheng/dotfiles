@@ -399,7 +399,17 @@ set -g status-position bottom
 
 set -g visual-activity on # 启用活动警告
 set -wg monitor-activity on # 非当前窗口有内容更新时在状态栏通知
-set -g default-command bash
+
+# 使用登录 shell 启动，确保 .bash_profile 和 .bashrc 被正确加载
+# 这样才能让 Starship、zoxide、fzf、direnv 等工具在 tmux 中可用
+set -g default-shell /bin/bash
+set -g default-command ""
+
+# 确保环境变量传递给 tmux
+set -ga update-environment " PATH"
+set -ga update-environment " HOME"
+set -ga update-environment " EDITOR"
+set -ga update-environment " TERM"
 
 # -- tpm -----------------------------------------------------------------------
 
