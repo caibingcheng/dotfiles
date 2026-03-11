@@ -1,103 +1,469 @@
 #!/bin/bash
-# A script to show contributor statistics for a git repository
+# Enhanced contributor statistics for a git repository
+# Supports: time range filtering, multiple output formats, author normalization, file filtering
 
 set -o errexit
 set -o nounset
 set -o pipefail
 
+# Default values
+REPO_PATH="."
+TOP_N=""
+SINCE=""
+UNTIL=""
+FORMAT="table"
+NORMALIZE_EMAIL=false
+NO_MERGES=false
+FIRST_PARENT=false
+SORT_BY="commits"
+REVERSE=false
+EXT_FILTERS=()
+EXCLUDE_PATTERNS=()
+
+# Colors (disable with --no-color)
+USE_COLOR=true
+
+# Help message
 usage() {
-  echo "Usage: repo_stats [-h] [-n NUM] [REPO_PATH]"
-  echo ""
-  echo "Show contributor statistics for a git repository"
-  echo ""
-  echo "Options:"
-  echo "  -h, --help    Show this help message"
-  echo "  -n NUM        Show top N contributors (default: all)"
-  echo ""
-  echo "Arguments:"
-  echo "  REPO_PATH     Path to the git repository (default: current directory)"
+  cat << EOF
+Usage: repo_stats [OPTIONS] [REPO_PATH]
+
+Show contributor statistics for a git repository
+
+Options:
+  -h, --help              Show this help message
+  -n NUM                  Show top N contributors (default: all)
+  --since DATE            Only count commits after DATE (e.g., "2024-01-01" or "3 months ago")
+  --until DATE            Only count commits before DATE
+  --format FORMAT         Output format: table, json, csv, markdown (default: table)
+  --normalize             Normalize authors by email (merge same person with different names)
+  --no-merges             Exclude merge commits
+  --first-parent          Follow only the first parent of merge commits
+  --sort-by FIELD         Sort by: commits, lines, additions, deletions (default: commits)
+  --reverse               Reverse sort order
+  -e, --ext EXT           Include only files with extension EXT (can be used multiple times)
+  --exclude PATTERN       Exclude files matching PATTERN (can be used multiple times)
+  --no-color              Disable colored output
+
+Arguments:
+  REPO_PATH               Path to the git repository (default: current directory)
+
+Examples:
+  repo_stats -n 10
+  repo_stats --since "2024-01-01" --format json
+  repo_stats --ext py --ext js --no-merges
+  repo_stats --exclude "test_" --exclude "spec_"
+  repo_stats --sort-by lines --reverse
+EOF
   exit 0
 }
 
-REPO_PATH="."
-TOP_N=""
+# Parse arguments
+parse_args() {
+  local args=()
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -h|--help)
-      usage
-      ;;
-    -n)
-      TOP_N="$2"
-      shift 2
-      ;;
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        usage
+        ;;
+      -n)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          TOP_N="$2"
+          shift 2
+        else
+          echo "Error: -n requires a number" >&2
+          exit 1
+        fi
+        ;;
+      --since)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          SINCE="$2"
+          shift 2
+        else
+          echo "Error: --since requires a date" >&2
+          exit 1
+        fi
+        ;;
+      --until)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          UNTIL="$2"
+          shift 2
+        else
+          echo "Error: --until requires a date" >&2
+          exit 1
+        fi
+        ;;
+      --format)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          FORMAT="$2"
+          shift 2
+        else
+          echo "Error: --format requires a format" >&2
+          exit 1
+        fi
+        ;;
+      --normalize)
+        NORMALIZE_EMAIL=true
+        shift
+        ;;
+      --no-merges)
+        NO_MERGES=true
+        shift
+        ;;
+      --first-parent)
+        FIRST_PARENT=true
+        shift
+        ;;
+      --sort-by)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          SORT_BY="$2"
+          shift 2
+        else
+          echo "Error: --sort-by requires a field" >&2
+          exit 1
+        fi
+        ;;
+      --reverse)
+        REVERSE=true
+        shift
+        ;;
+      -e|--ext)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          EXT_FILTERS+=("$2")
+          shift 2
+        else
+          echo "Error: $1 requires an extension" >&2
+          exit 1
+        fi
+        ;;
+      --exclude)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          EXCLUDE_PATTERNS+=("$2")
+          shift 2
+        else
+          echo "Error: --exclude requires a pattern" >&2
+          exit 1
+        fi
+        ;;
+      --no-color)
+        USE_COLOR=false
+        shift
+        ;;
+      --)
+        shift
+        args+=("$@")
+        break
+        ;;
+      -*)
+        echo "Error: Unknown option $1" >&2
+        echo "Use --help for usage information" >&2
+        exit 1
+        ;;
+      *)
+        args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  # Set REPO_PATH if provided
+  if [[ ${#args[@]} -gt 0 ]]; then
+    REPO_PATH="${args[0]}"
+  fi
+
+  # Validate format
+  case "$FORMAT" in
+    table|json|csv|markdown) ;;
     *)
-      REPO_PATH="$1"
-      shift
+      echo "Error: Invalid format '$FORMAT'. Use: table, json, csv, markdown" >&2
+      exit 1
       ;;
   esac
-done
 
-# Check if it is a git repository
-if ! git -C "${REPO_PATH}" rev-parse --git-dir &>/dev/null 2>&1; then
-  echo "Error: ${REPO_PATH} is not a git repository"
-  exit 1
-fi
+  # Validate sort-by
+  case "$SORT_BY" in
+    commits|lines|additions|deletions) ;;
+    *)
+      echo "Error: Invalid sort field '$SORT_BY'. Use: commits, lines, additions, deletions" >&2
+      exit 1
+      ;;
+  esac
+}
 
-REPO_DIR="$(git -C "${REPO_PATH}" rev-parse --show-toplevel)"
-REMOTE_URL="$(git -C "${REPO_DIR}" remote get-url origin 2>/dev/null || echo "${REPO_DIR}")"
-BRANCH="$(git -C "${REPO_DIR}" rev-parse --abbrev-ref HEAD)"
-TOTAL_COMMITS="$(git -C "${REPO_DIR}" rev-list --count HEAD 2>/dev/null || echo "0")"
+# Build git log command with filters
+build_git_log_cmd() {
+  local cmd="git -C \"${REPO_DIR}\" log --numstat --format=\"COMMIT %aN|%aE\""
 
-echo "Repository: ${REMOTE_URL}"
-echo "Branch:     ${BRANCH}"
-echo "Commits:    ${TOTAL_COMMITS}"
-echo ""
+  if [[ -n "$SINCE" ]]; then
+    cmd="${cmd} --since=\"${SINCE}\""
+  fi
 
-if [ "${TOTAL_COMMITS}" -eq 0 ]; then
-  echo "No commits found"
-  exit 0
-fi
+  if [[ -n "$UNTIL" ]]; then
+    cmd="${cmd} --until=\"${UNTIL}\""
+  fi
 
-printf "%-40s %8s %8s %10s %10s %8s\n" "Author" "Commits" "% Commits" "Added" "Removed" "% Lines"
-echo "--------------------------------------------------------------------------------------------"
+  if [[ "$NO_MERGES" == true ]]; then
+    cmd="${cmd} --no-merges"
+  fi
 
-# Collect per-author stats in one pass using git log with numstat
-STATS="$(git -C "${REPO_DIR}" log --numstat --format="COMMIT %aN" | awk '
-  /^COMMIT / {
-    author = substr($0, 8)
-    commits[author]++
-    next
-  }
-  $1 ~ /^[0-9]+$/ {
-    added[author] += $1
-    removed[author] += $2
-  }
-  END {
-    # Calculate totals first
-    total_commits = 0
-    total_lines = 0
-    for (a in commits) {
-      total_commits += commits[a]
-      total_lines += (added[a] + removed[a])
+  if [[ "$FIRST_PARENT" == true ]]; then
+    cmd="${cmd} --first-parent"
+  fi
+
+  # Add file filters
+  if [[ ${#EXT_FILTERS[@]} -gt 0 ]]; then
+    local ext_pattern=""
+    for ext in "${EXT_FILTERS[@]}"; do
+      ext_pattern="${ext_pattern}*.${ext} "
+    done
+    cmd="${cmd} -- ${ext_pattern}"
+  elif [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
+    # For exclude patterns, we need to use pathspec
+    cmd="${cmd} --"
+    for pattern in "${EXCLUDE_PATTERNS[@]}"; do
+      cmd="${cmd} \":(exclude)${pattern}\""
+    done
+  fi
+
+  echo "$cmd"
+}
+
+# Process git log output and calculate statistics
+process_stats() {
+  local git_cmd
+  git_cmd=$(build_git_log_cmd)
+
+  eval "$git_cmd" | awk -v normalize="$NORMALIZE_EMAIL" '
+    BEGIN {
+      FS = "|"
     }
+    /^COMMIT / {
+      split($0, parts, "|");
+      author_name = substr(parts[1], 8);
+      author_email = parts[2];
 
-    # Output with percentages
-    for (a in commits) {
-      commit_pct = total_commits > 0 ? (commits[a] / total_commits) * 100 : 0
-      lines_changed = added[a] + removed[a]
-      lines_pct = total_lines > 0 ? (lines_changed / total_lines) * 100 : 0
-      printf "%d\t%s\t%d\t%d\t%.1f\t%.1f\t%d\t%d\n", commits[a], a, added[a]+0, removed[a]+0, commit_pct, lines_pct, total_commits, total_lines
+      # Use email as key if normalizing, otherwise use name
+      if (normalize == "true" && author_email != "") {
+        key = author_email;
+        # Store the most common name for this email
+        name_count[author_email, author_name]++;
+        if (name_count[author_email, author_name] > max_name_count[author_email]) {
+          max_name_count[author_email] = name_count[author_email, author_name];
+          author_names[author_email] = author_name;
+        }
+      } else {
+        key = author_name;
+        author_names[key] = author_name;
+      }
+
+      commits[key]++;
+      next;
     }
-  }
-' | sort -rn)"
+    /^[0-9]+\t[0-9]+\t/ {
+      added[key] += $1;
+      removed[key] += $2;
+    }
+    END {
+      total_commits = 0;
+      total_added = 0;
+      total_removed = 0;
+      for (k in commits) {
+        total_commits += commits[k];
+        total_added += added[k];
+        total_removed += removed[k];
+      }
+      total_lines = total_added + total_removed;
 
-# Limit to top N if specified
-if [ -n "${TOP_N}" ]; then
-  STATS="$(echo "${STATS}" | head -n "${TOP_N}")"
-fi
+      for (k in commits) {
+        commit_pct = total_commits > 0 ? (commits[k] / total_commits) * 100 : 0;
+        lines_changed = added[k] + removed[k];
+        lines_pct = total_lines > 0 ? (lines_changed / total_lines) * 100 : 0;
+        printf "%s\t%d\t%d\t%d\t%.2f\t%.2f\t%s\n", author_names[k], commits[k], added[k], removed[k], commit_pct, lines_pct, k;
+      }
+    }
+  '
+}
 
-# Print formatted results
-echo "${STATS}" | while IFS=$'\t' read -r commits author added removed commit_pct lines_pct total_commits total_lines; do
-  [ -n "${commits}" ] && printf "%-40s %8d %7.1f%% %10d %10d %7.1f%%\n" "${author}" "${commits}" "${commit_pct}" "${added}" "${removed}" "${lines_pct}"
-done
+# Sort statistics based on user preference
+sort_stats() {
+  local sort_field="$1"
+  local reverse="$2"
+
+  local sort_col
+  case "$sort_field" in
+    commits) sort_col=2 ;;
+    additions) sort_col=3 ;;
+    deletions) sort_col=4 ;;
+    lines) sort_col=3,4 ;;
+    *) sort_col=2 ;;
+  esac
+
+  local sort_opts="-t$'\t' -k${sort_col} -n"
+  if [[ "$reverse" == false ]]; then
+    sort_opts="${sort_opts} -r"
+  fi
+
+  eval "sort $sort_opts"
+}
+
+# Output in different formats
+output_table() {
+  local data="$1"
+  local total_commits="$2"
+  local total_lines="$3"
+
+  # Print header
+  printf "%-40s %8s %8s %10s %10s %8s\n" "Author" "Commits" "% Commits" "Added" "Removed" "% Lines"
+  echo "--------------------------------------------------------------------------------------------"
+
+  # Print data
+  echo "$data" | while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+    [[ -n "$commits" ]] && printf "%-40s %8d %7.1f%% %10d %10d %7.1f%%\n" \
+      "${author:0:40}" "$commits" "$commit_pct" "$added" "$removed" "$lines_pct"
+  done
+
+  # Print summary
+  echo "--------------------------------------------------------------------------------------------"
+  printf "%-40s %8s %8s %10s %10s\n" "Total" "$total_commits" "100.0%" "$total_added" "$total_removed"
+}
+
+output_json() {
+  local data="$1"
+  local total_commits="$2"
+  local total_lines="$3"
+
+  echo "{"
+  echo "  \"repository\": \"${REMOTE_URL}\","
+  echo "  \"branch\": \"${BRANCH}\","
+  echo "  \"total_commits\": ${total_commits},"
+  echo "  \"total_lines_changed\": ${total_lines},"
+  [[ -n "$SINCE" ]] && echo "  \"since\": \"${SINCE}\","
+  [[ -n "$UNTIL" ]] && echo "  \"until\": \"${UNTIL}\","
+  echo "  \"contributors\": ["
+
+  local first=true
+  echo "$data" | while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+    [[ -n "$commits" ]] || continue
+    if [[ "$first" == true ]]; then
+      first=false
+    else
+      echo ","
+    fi
+    printf "    {\n"
+    printf "      \"author\": \"%s\",\n" "$author"
+    printf "      \"commits\": %d,\n" "$commits"
+    printf "      \"commits_percentage\": %.2f,\n" "$commit_pct"
+    printf "      \"lines_added\": %d,\n" "$added"
+    printf "      \"lines_removed\": %d,\n" "$removed"
+    printf "      \"lines_percentage\": %.2f\n" "$lines_pct"
+    printf "    }"
+  done
+  echo ""
+  echo "  ]"
+  echo "}"
+}
+
+output_csv() {
+  local data="$1"
+
+  echo "Author,Commits,Commits%,Lines Added,Lines Removed,Lines%"
+  echo "$data" | while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+    [[ -n "$commits" ]] && echo "\"${author}\",${commits},${commit_pct},${added},${removed},${lines_pct}"
+  done
+}
+
+output_markdown() {
+  local data="$1"
+  local total_commits="$2"
+  local total_removed="$3"
+
+  echo "| Author | Commits | % Commits | Added | Removed | % Lines |"
+  echo "|--------|---------|-----------|-------|---------|---------|"
+
+  echo "$data" | while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+    [[ -n "$commits" ]] && printf "| %s | %d | %.1f%% | %d | %d | %.1f%% |\n" \
+      "${author:0:30}" "$commits" "$commit_pct" "$added" "$removed" "$lines_pct"
+  done
+
+  echo "|--------|---------|-----------|-------|---------|---------|"
+  printf "| **Total** | **%d** | **100%%** | **%s** | **%s** | |\n" \
+    "$total_commits" "$total_added" "$total_removed"
+}
+
+# Main execution
+main() {
+  parse_args "$@"
+
+  # Check if it is a git repository
+  if ! git -C "${REPO_PATH}" rev-parse --git-dir &>/dev/null 2>&1; then
+    echo "Error: ${REPO_PATH} is not a git repository" >&2
+    exit 1
+  fi
+
+  REPO_DIR="$(git -C "${REPO_PATH}" rev-parse --show-toplevel)"
+  REMOTE_URL="$(git -C "${REPO_DIR}" remote get-url origin 2>/dev/null || echo "${REPO_DIR}")"
+  BRANCH="$(git -C "${REPO_DIR}" rev-parse --abbrev-ref HEAD)"
+
+  # Calculate total commits with filters
+  local count_cmd="git -C \"${REPO_DIR}\" rev-list --count HEAD"
+  [[ "$NO_MERGES" == true ]] && count_cmd="${count_cmd} --no-merges"
+  [[ "$FIRST_PARENT" == true ]] && count_cmd="${count_cmd} --first-parent"
+  [[ -n "$SINCE" ]] && count_cmd="${count_cmd} --since=\"${SINCE}\""
+  [[ -n "$UNTIL" ]] && count_cmd="${count_cmd} --until=\"${UNTIL}\""
+
+  TOTAL_COMMITS="$(eval "$count_cmd" 2>/dev/null || echo "0")"
+
+  # Output repository info (except for JSON which includes it in the object)
+  if [[ "$FORMAT" != "json" ]]; then
+    echo "Repository: ${REMOTE_URL}"
+    echo "Branch:     ${BRANCH}"
+    echo "Commits:    ${TOTAL_COMMITS}"
+    [[ -n "$SINCE" ]] && echo "Since:      ${SINCE}"
+    [[ -n "$UNTIL" ]] && echo "Until:      ${UNTIL}"
+    [[ ${#EXT_FILTERS[@]} -gt 0 ]] && echo "Extensions: ${EXT_FILTERS[*]}"
+    [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]] && echo "Excluding:  ${EXCLUDE_PATTERNS[*]}"
+    echo ""
+  fi
+
+  if [[ "${TOTAL_COMMITS}" -eq 0 ]]; then
+    echo "No commits found"
+    exit 0
+  fi
+
+  # Collect and process statistics
+  STATS="$(process_stats | sort_stats "$SORT_BY" "$REVERSE")"
+
+  # Limit to top N if specified
+  if [[ -n "${TOP_N}" ]]; then
+    STATS="$(echo "${STATS}" | head -n "${TOP_N}")"
+  fi
+
+  # Calculate totals for output
+  total_added=0
+  total_removed=0
+  while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+    [[ -n "$commits" ]] || continue
+    total_added=$((total_added + added))
+    total_removed=$((total_removed + removed))
+  done <<< "$STATS"
+  total_lines=$((total_added + total_removed))
+
+  # Output in selected format
+  case "$FORMAT" in
+    table)
+      output_table "$STATS" "$TOTAL_COMMITS" "$total_lines"
+      ;;
+    json)
+      output_json "$STATS" "$TOTAL_COMMITS" "$total_lines"
+      ;;
+    csv)
+      output_csv "$STATS"
+      ;;
+    markdown)
+      output_markdown "$STATS" "$TOTAL_COMMITS" "$total_removed"
+      ;;
+  esac
+}
+
+main "$@"
