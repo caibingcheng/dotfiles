@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh"
+
+log_info "Configuring fzf..."
+
+# Install fzf if not present
+FZF_INSTALLED=false
+if ! command_exists fzf; then
+    log_info "Installing fzf..."
+    
+    # Priority 1: Homebrew
+    if has_brew; then
+        log_info "Installing fzf via Homebrew..."
+        if brew_install fzf 2>/dev/null; then
+            FZF_INSTALLED=true
+            log_info "FZF installed via Homebrew"
+        else
+            log_warn "Failed to install fzf via Homebrew"
+        fi
+    fi
+    
+    # Priority 2: Git clone and install from source (pinned to specific version)
+    if [[ "$FZF_INSTALLED" != true ]]; then
+        log_info "Installing fzf from source..."
+        
+        # Pin to specific version for security
+        FZF_VERSION="0.56.0"
+        
+        # Clone fzf repository with specific tag
+        if [[ ! -d "${HOME}/.fzf" ]]; then
+            if git clone --depth 1 --branch "v${FZF_VERSION}" https://github.com/junegunn/fzf.git "${HOME}/.fzf" 2>/dev/null; then
+                # Install fzf
+                if "${HOME}/.fzf/install" --all --no-bash --no-zsh --no-fish --no-update-rc 2>/dev/null; then
+                    FZF_INSTALLED=true
+                    log_info "FZF installed from source (v${FZF_VERSION})"
+                else
+                    log_warn "Failed to install fzf binaries from source, cleaning up..."
+                    rm -rf "${HOME}/.fzf"
+                fi
+            else
+                log_warn "Failed to clone fzf repository"
+            fi
+        else
+            # Already cloned, just need to check if binary exists
+            if [[ -f "${HOME}/.fzf/bin/fzf" ]]; then
+                FZF_INSTALLED=true
+                log_info "FZF already installed from source"
+            fi
+        fi
+    fi
+else
+    FZF_INSTALLED=true
+    log_info "FZF already installed"
+fi
+
+# Skip configuration if installation failed
+if [[ "$FZF_INSTALLED" != true ]]; then
+    log_warn "FZF installation failed, skipping configuration"
+    exit 0
+fi
+
+# Add fzf to PATH if installed from source
+if [[ -f "${HOME}/.fzf/bin/fzf" ]]; then
+    if ! grep -q "fzf/bin" "${HOME}/.bashrc" 2>/dev/null; then
+        log_info "Adding fzf to PATH..."
+        echo '' >> "${HOME}/.bashrc"
+        echo '# FZF PATH' >> "${HOME}/.bashrc"
+        echo 'export PATH="${HOME}/.fzf/bin:${PATH}"' >> "${HOME}/.bashrc"
+    fi
+fi
+
+# Add fzf bash integration
+if ! grep -q "fzf --bash" "${HOME}/.bashrc" 2>/dev/null; then
+    log_info "Adding fzf bash integration..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# FZF bash integration' >> "${HOME}/.bashrc"
+    echo 'eval "$(fzf --bash)"' >> "${HOME}/.bashrc"
+fi
+
+# Link fzf scripts to bin directory
+ensure_dir "${HOME}/bin"
+
+for script in "${DOTFILES_ROOT}/fzf"/fzf-*; do
+    if [[ -f "$script" ]]; then
+        script_name=$(basename "$script")
+        target="${HOME}/bin/${script_name}"
+        
+        # Remove old symlink if exists
+        if [[ -L "$target" ]]; then
+            rm "$target"
+        fi
+        
+        # Create symlink
+        ln -sf "$script" "$target"
+        log_info "Linked ${script_name} to ~/bin/"
+    fi
+done
+
+# Set default fzf options if not set
+if ! grep -q "FZF_DEFAULT_OPTS" "${HOME}/.bashrc" 2>/dev/null; then
+    log_info "Setting FZF_DEFAULT_OPTS..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# FZF default options' >> "${HOME}/.bashrc"
+    echo 'export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline"' >> "${HOME}/.bashrc"
+fi
+
+log_info "FZF configuration complete!"
+log_info "Scripts available: fzf-git-branch, fzf-kill, fzf-apt, fzf-history"

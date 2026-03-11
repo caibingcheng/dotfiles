@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh"
+
+log_info "Configuring direnv..."
+
+# Install direnv if not present
+DIRENV_INSTALLED=false
+if ! command_exists direnv; then
+    log_info "Installing direnv..."
+    
+    # Priority 1: Homebrew
+    if has_brew; then
+        log_info "Installing direnv via Homebrew..."
+        if brew_install direnv 2>/dev/null; then
+            DIRENV_INSTALLED=true
+            log_info "Direnv installed via Homebrew"
+        else
+            log_warn "Failed to install direnv via Homebrew"
+        fi
+    fi
+    
+    # Priority 2: Cargo (build from source)
+    if [[ "$DIRENV_INSTALLED" != true ]] && command_exists cargo; then
+        log_info "Installing direnv via Cargo..."
+        if cargo install direnv 2>/dev/null; then
+            DIRENV_INSTALLED=true
+            log_info "Direnv installed via Cargo"
+        else
+            log_warn "Failed to install direnv via Cargo"
+        fi
+    fi
+    
+    # Priority 2: apt (for Ubuntu/Debian)
+    if [[ "$DIRENV_INSTALLED" != true ]] && command_exists apt-get; then
+        log_info "Installing direnv via apt..."
+        if sudo apt-get update && sudo apt-get install -y direnv 2>/dev/null; then
+            DIRENV_INSTALLED=true
+            log_info "Direnv installed via apt"
+        else
+            log_warn "Failed to install direnv via apt"
+        fi
+    fi
+    
+    # Priority 3: Direct download from GitHub releases (without curl | bash)
+    if [[ "$DIRENV_INSTALLED" != true ]]; then
+        log_info "Installing direnv from GitHub releases..."
+        
+        # Pin to specific version
+        DIRENV_VERSION="2.34.0"
+        
+        # Determine architecture
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)  DIRENV_ARCH="x86_64" ;;
+            aarch64) DIRENV_ARCH="arm64" ;;
+            armv7l)  DIRENV_ARCH="arm" ;;
+            *)       log_warn "Unsupported architecture: $ARCH"; DIRENV_ARCH="" ;;
+        esac
+        
+        if [[ -n "$DIRENV_ARCH" ]]; then
+            TEMP_DIR=$(mktemp -d)
+            DOWNLOAD_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${DIRENV_ARCH}"
+            
+            if curl -fsSL "$DOWNLOAD_URL" -o "${TEMP_DIR}/direnv" 2>/dev/null; then
+                chmod +x "${TEMP_DIR}/direnv"
+                if mv "${TEMP_DIR}/direnv" "${HOME}/.local/bin/direnv" 2>/dev/null || \
+                   sudo mv "${TEMP_DIR}/direnv" "/usr/local/bin/direnv" 2>/dev/null; then
+                    DIRENV_INSTALLED=true
+                    log_info "Direnv installed from GitHub releases (v${DIRENV_VERSION})"
+                else
+                    log_warn "Failed to move direnv binary to PATH"
+                fi
+            else
+                log_warn "Failed to download direnv from GitHub releases"
+            fi
+            
+            rm -rf "$TEMP_DIR"
+        fi
+    fi
+else
+    DIRENV_INSTALLED=true
+fi
+
+# Skip configuration if installation failed
+if [[ "$DIRENV_INSTALLED" != true ]]; then
+    log_warn "Direnv installation failed, skipping configuration"
+    exit 0
+fi
+
+# Link direnvrc
+safe_link "${DOTFILES_ROOT}/direnv/direnvrc" "${HOME}/.direnvrc"
+
+# Add direnv hook to bashrc
+if ! grep -q "direnv hook bash" "${HOME}/.bashrc" 2>/dev/null; then
+    log_info "Adding direnv hook to .bashrc..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# Direnv hook' >> "${HOME}/.bashrc"
+    echo 'eval "$(direnv hook bash)"' >> "${HOME}/.bashrc"
+fi
+
+# Add direnv whitelist for common directories
+ensure_dir "${HOME}/.config/direnv"
+
+log_info "Direnv configuration complete!"
+log_info "Usage: Create .envrc files in project directories"

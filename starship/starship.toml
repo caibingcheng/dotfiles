@@ -1,0 +1,72 @@
+# Starship configuration - Minimal style
+# https://starship.rs/config/
+
+# 全局配置
+add_newline = false
+format = """$custom$directory$git_branch$git_status$line_break$character"""
+
+# 系统运行时间
+[custom.uptime]
+command = "uptime -p | sed 's/up //; s/ days\\?/d/g; s/ hours\\?/h/g; s/ minutes\\?/m/g; s/,//g; s/ //g'"
+when = true
+format = "[$output]($style) "
+style = "dimmed white"
+
+# 字符配置
+[character]
+success_symbol = "[\\$](bold green)"
+error_symbol = "[\\$](bold red)"
+
+# 目录配置
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+format = "[$path]($style) "
+style = "bold blue"
+
+# Git 分支配置
+[git_branch]
+symbol = ""
+format = "[$branch]($style) "
+style = "purple"
+
+# Git 状态配置 - 更丰富的信息
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+ahead = "↑${count}"
+behind = "↓${count}"
+diverged = "↕↑${ahead_count}↓${behind_count}"
+up_to_date = "✓"
+untracked = "?"
+stashed = "📦"
+modified = "✚"
+staged = "●"
+renamed = "»"
+deleted = "✖"
+conflicted = "⚠"
+style = "yellow"
+
+# 命令执行时间
+[cmd_duration]
+disabled = false
+min_time = 2000  # 只显示超过 2 秒的命令
+format = "[$duration]($style) "
+style = "yellow"
+
+# 禁用其他模块
+time.disabled = true
+username.disabled = true
+hostname.disabled = true
+python.disabled = true
+nodejs.disabled = true
+rust.disabled = true
+golang.disabled = true
+java.disabled = true
+package.disabled = true
+docker_context.disabled = true
+terraform.disabled = true
+kubernetes.disabled = true
+battery.disabled = true
+memory_usage.disabled = true
+sudo.disabled = true
+container.disabled = true

@@ -12,11 +12,15 @@ TOP_N=""
 SINCE=""
 UNTIL=""
 FORMAT="table"
-NORMALIZE_EMAIL=false
+NORMALIZE_EMAIL=true
 NO_MERGES=false
 FIRST_PARENT=false
+ALL_BRANCHES=false
+TARGET_BRANCH=""
 SORT_BY="commits"
+DEDUP_PATCH_ID=false
 REVERSE=false
+SHOW_PROGRESS=false
 EXT_FILTERS=()
 EXCLUDE_PATTERNS=()
 
@@ -33,12 +37,17 @@ Show contributor statistics for a git repository
 Options:
   -h, --help              Show this help message
   -n NUM                  Show top N contributors (default: all)
+  --all                   Include commits from all branches, not just current
+  --branch BRANCH         Specify a branch to analyze (default: current branch)
   --since DATE            Only count commits after DATE (e.g., "2024-01-01" or "3 months ago")
   --until DATE            Only count commits before DATE
   --format FORMAT         Output format: table, json, csv, markdown (default: table)
-  --normalize             Normalize authors by email (merge same person with different names)
+  --normalize             Normalize authors by email (default: enabled)
+  --no-normalize          Don't normalize authors by email
   --no-merges             Exclude merge commits
   --first-parent          Follow only the first parent of merge commits
+  --dedup-patch-id        Deduplicate commits by patch-id (keeps earliest)
+  --progress              Show progress bar during deduplication
   --sort-by FIELD         Sort by: commits, lines, additions, deletions (default: commits)
   --reverse               Reverse sort order
   -e, --ext EXT           Include only files with extension EXT (can be used multiple times)
@@ -107,6 +116,10 @@ parse_args() {
         NORMALIZE_EMAIL=true
         shift
         ;;
+      --no-normalize)
+        NORMALIZE_EMAIL=false
+        shift
+        ;;
       --no-merges)
         NO_MERGES=true
         shift
@@ -114,6 +127,27 @@ parse_args() {
       --first-parent)
         FIRST_PARENT=true
         shift
+        ;;
+      --dedup-patch-id)
+        DEDUP_PATCH_ID=true
+        shift
+        ;;
+      --progress)
+        SHOW_PROGRESS=true
+        shift
+        ;;
+      --all)
+        ALL_BRANCHES=true
+        shift
+        ;;
+      --branch)
+        if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+          TARGET_BRANCH="$2"
+          shift 2
+        else
+          echo "Error: --branch requires a branch name" >&2
+          exit 1
+        fi
         ;;
       --sort-by)
         if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
@@ -193,7 +227,17 @@ parse_args() {
 
 # Build git log command with filters
 build_git_log_cmd() {
-  local cmd="git -C \"${REPO_DIR}\" log --numstat --format=\"COMMIT %aN|%aE\""
+  local fmt="COMMIT %aN|%aE"
+  if [[ "$DEDUP_PATCH_ID" == true ]]; then
+    fmt="DEDUP %H %at %aN|%aE"
+  fi
+  local cmd="git -C \"${REPO_DIR}\" log --numstat --format=\"${fmt}\""
+
+  if [[ "$ALL_BRANCHES" == true ]]; then
+    cmd="${cmd} --all"
+  elif [[ -n "$TARGET_BRANCH" ]]; then
+    cmd="${cmd} \"${TARGET_BRANCH}\""
+  fi
 
   if [[ -n "$SINCE" ]]; then
     cmd="${cmd} --since=\"${SINCE}\""
@@ -212,15 +256,13 @@ build_git_log_cmd() {
   fi
 
   # Add file filters
-  if [[ ${#EXT_FILTERS[@]} -gt 0 ]]; then
-    local ext_pattern=""
-    for ext in "${EXT_FILTERS[@]}"; do
-      ext_pattern="${ext_pattern}*.${ext} "
-    done
-    cmd="${cmd} -- ${ext_pattern}"
-  elif [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
-    # For exclude patterns, we need to use pathspec
+  if [[ ${#EXT_FILTERS[@]} -gt 0 ]] || [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
     cmd="${cmd} --"
+    # Add extension filters (include patterns)
+    for ext in "${EXT_FILTERS[@]}"; do
+      cmd="${cmd} \"*.${ext}\""
+    done
+    # Add exclude patterns
     for pattern in "${EXCLUDE_PATTERNS[@]}"; do
       cmd="${cmd} \":(exclude)${pattern}\""
     done
@@ -229,60 +271,274 @@ build_git_log_cmd() {
   echo "$cmd"
 }
 
+# Deduplicate commits by patch-id, keeping the earliest one
+# Input: lines from git log with format "DEDUP %H %at %aN|%aE"
+# Output: unique commit hashes (one per line)
+dedup_commits() {
+  local line hash timestamp author_info patch_id
+  declare -A patchid_to_hash
+  declare -A patchid_to_time
+
+  while IFS= read -r line; do
+    # Parse DEDUP line: "DEDUP <hash> <timestamp> <author>|<email>"
+    if [[ "$line" =~ ^DEDUP\ ([a-f0-9]+)\ ([0-9]+)\ (.+) ]]; then
+      hash="${BASH_REMATCH[1]}"
+      timestamp="${BASH_REMATCH[2]}"
+      author_info="${BASH_REMATCH[3]}"
+
+      # Calculate patch-id
+      patch_id=$(git -C "${REPO_DIR}" show "$hash" 2>/dev/null | git patch-id --stable 2>/dev/null | cut -d' ' -f1)
+
+      # If no patch-id (e.g., empty commit), use hash as unique id
+      if [[ -z "$patch_id" ]]; then
+        patch_id="$hash"
+      fi
+
+      # Keep the earliest commit for each patch-id
+      if [[ -z "${patchid_to_time[$patch_id]:-}" ]] || [[ "$timestamp" -lt "${patchid_to_time[$patch_id]}" ]]; then
+        patchid_to_hash[$patch_id]="$hash"
+        patchid_to_time[$patch_id]="$timestamp"
+      fi
+    fi
+  done
+
+  # Output all unique hashes
+  for hash in "${patchid_to_hash[@]}"; do
+    echo "$hash"
+  done
+}
+
 # Process git log output and calculate statistics
 process_stats() {
   local git_cmd
   git_cmd=$(build_git_log_cmd)
 
-  eval "$git_cmd" | awk -v normalize="$NORMALIZE_EMAIL" '
-    BEGIN {
-      FS = "|"
-    }
-    /^COMMIT / {
-      split($0, parts, "|");
-      author_name = substr(parts[1], 8);
-      author_email = parts[2];
-
-      # Use email as key if normalizing, otherwise use name
-      if (normalize == "true" && author_email != "") {
-        key = author_email;
-        # Store the most common name for this email
-        name_count[author_email, author_name]++;
-        if (name_count[author_email, author_name] > max_name_count[author_email]) {
-          max_name_count[author_email] = name_count[author_email, author_name];
-          author_names[author_email] = author_name;
+  if [[ "$DEDUP_PATCH_ID" == true ]]; then
+    # Single-pass: collect all data first, then deduplicate by patch-id
+    # Output format per commit: HASH|TIMESTAMP|AUTHOR|EMAIL|ADDED|REMOVED
+    eval "$git_cmd" | awk -v repo_dir="${REPO_DIR}" -v normalize="$NORMALIZE_EMAIL" '
+      BEGIN {
+        FS = "|"
+        OFS = "|"
+        # Read all commits into memory first
+      }
+      /^DEDUP / {
+        # Parse: DEDUP <hash> <timestamp> <author>|<email>
+        match($0, /^DEDUP ([a-f0-9]+) ([0-9]+) (.+)\|(.+)/, parts);
+        if (parts[1] != "") {
+          hash = parts[1];
+          timestamp = parts[2] + 0;  # Convert to number
+          author_name = parts[3];
+          author_email = parts[4];
+          current_hash = hash;
+          commit_timestamp[hash] = timestamp;
+          commit_author[hash] = author_name;
+          commit_email[hash] = author_email;
+          commit_added[hash] = 0;
+          commit_removed[hash] = 0;
         }
-      } else {
-        key = author_name;
-        author_names[key] = author_name;
+        next;
       }
+      /^[0-9]+\t[0-9]+\t/ {
+        if (current_hash != "") {
+          commit_added[current_hash] += $1;
+          commit_removed[current_hash] += $2;
+        }
+      }
+      # Handle binary files (marked as "-\t-\t")
+      /^-\t-\t/ {
+        # Binary files contribute 0 to line counts
+        next;
+      }
+      END {
+        # Calculate patch-id for each commit and deduplicate
+        # We use a simple hash of the diff content as approximation
+        # Actually, we need to call external command which is not possible in pure awk
+        # So we output all data and let bash handle deduplication
+        for (h in commit_timestamp) {
+          print h, commit_timestamp[h], commit_author[h], commit_email[h], commit_added[h], commit_removed[h];
+        }
+      }
+    ' | {
+      # Process with immediate progress display
+      local current_count=0
+      local progress_width=40
+      local start_time=$(date +%s)
 
-      commits[key]++;
-      next;
-    }
-    /^[0-9]+\t[0-9]+\t/ {
-      added[key] += $1;
-      removed[key] += $2;
-    }
-    END {
-      total_commits = 0;
-      total_added = 0;
-      total_removed = 0;
-      for (k in commits) {
-        total_commits += commits[k];
-        total_added += added[k];
-        total_removed += removed[k];
-      }
-      total_lines = total_added + total_removed;
+      # Create temp file for storing data while counting
+      local temp_file
+      temp_file=$(mktemp)
+      
+      # Show initial progress message immediately
+      if [[ ( -t 2 || "$SHOW_PROGRESS" == true ) && "$FORMAT" != "json" ]]; then
+        echo -n "Reading commits... " >&2
+      fi
 
-      for (k in commits) {
-        commit_pct = total_commits > 0 ? (commits[k] / total_commits) * 100 : 0;
-        lines_changed = added[k] + removed[k];
-        lines_pct = total_lines > 0 ? (lines_changed / total_lines) * 100 : 0;
-        printf "%s\t%d\t%d\t%d\t%.2f\t%.2f\t%s\n", author_names[k], commits[k], added[k], removed[k], commit_pct, lines_pct, k;
+      # Read data incrementally and show count progress
+      while IFS= read -r line; do
+        echo "$line" >> "$temp_file"
+        current_count=$((current_count + 1))
+        
+        # Update progress every 100 commits (faster for reading phase)
+        if [[ ( -t 2 || "$SHOW_PROGRESS" == true ) && "$FORMAT" != "json" && $((current_count % 100)) -eq 0 ]]; then
+          printf "\rReading commits... %d commits" "$current_count" >&2
+        fi
+      done
+
+      local total_commits_count=$current_count
+      
+      # Show final count and switch to processing phase
+      if [[ ( -t 2 || "$SHOW_PROGRESS" == true ) && "$FORMAT" != "json" ]]; then
+        if [[ $total_commits_count -ge 100 ]]; then
+          printf "\rReading commits... %d commits done\n" "$total_commits_count" >&2
+        fi
+        echo -n "Computing patch-ids... " >&2
+      fi
+
+      current_count=0
+
+      # Now show real progress bar with known total
+      if [[ ( -t 2 || "$SHOW_PROGRESS" == true ) && "$FORMAT" != "json" && $total_commits_count -gt 0 ]]; then
+        printf "\rComputing patch-ids... [%s] %3d%% (%d/%d)" "$(printf '%*s' $progress_width '' | tr ' ' '-')" 0 0 "$total_commits_count" >&2
+      fi
+
+      # Process each commit
+      while IFS='|' read -r hash timestamp author_name author_email added removed; do
+        current_count=$((current_count + 1))
+
+        # Calculate patch-id using git command
+        patch_id=$(git -C "${REPO_DIR}" show "$hash" 2>/dev/null | git patch-id --stable 2>/dev/null | cut -d' ' -f1)
+        if [[ -z "$patch_id" ]]; then
+          patch_id="$hash"
+        fi
+
+        # Output: patch_id|timestamp|hash|author|email|added|removed
+        echo "$patch_id|$timestamp|$hash|$author_name|$author_email|$added|$removed"
+
+        # Update progress bar every 10 commits
+        if [[ ( -t 2 || "$SHOW_PROGRESS" == true ) && "$FORMAT" != "json" && $((current_count % 10)) -eq 0 ]]; then
+          local percent=$((current_count * 100 / total_commits_count))
+          local filled=$((percent * progress_width / 100))
+          local empty=$((progress_width - filled))
+          local bar
+          bar=$(printf '%*s' "$filled" '' | tr ' ' '=')
+          bar="${bar}$(printf '%*s' "$empty" '' | tr ' ' '-')"
+          printf "\rComputing patch-ids... [%s] %3d%% (%d/%d)" "$bar" "$percent" "$current_count" "$total_commits_count" >&2
+        fi
+      done < "$temp_file"
+
+      rm -f "$temp_file"
+
+      # Clear progress bar when done
+      if [[ ( -t 2 || "$SHOW_PROGRESS" == true ) && "$FORMAT" != "json" ]]; then
+        printf "\r%*s\r" $((progress_width + 50)) "" >&2
+      fi
+    } | sort -t'|' -k1,1 -k2,2n | awk -F'|' -v normalize="$NORMALIZE_EMAIL" '
+      BEGIN {
+        # Group by patch_id, keep first (earliest)
       }
-    }
-  '
+      {
+        patch_id = $1;
+        if (!(patch_id in seen)) {
+          seen[patch_id] = 1;
+          hash = $3;
+          author_name = $4;
+          author_email = $5;
+          added = $6 + 0;
+          removed = $7 + 0;
+
+          if (normalize == "true" && author_email != "") {
+            key = author_email;
+            name_count[author_email, author_name]++;
+            if (name_count[author_email, author_name] > max_name_count[author_email]) {
+              max_name_count[author_email] = name_count[author_email, author_name];
+              author_names[author_email] = author_name;
+            }
+          } else {
+            key = author_name;
+            author_names[key] = author_name;
+          }
+
+          commits[key]++;
+          added_lines[key] += added;
+          removed_lines[key] += removed;
+        }
+      }
+      END {
+        total_commits = 0;
+        total_added = 0;
+        total_removed = 0;
+        for (k in commits) {
+          total_commits += commits[k];
+          total_added += added_lines[k];
+          total_removed += removed_lines[k];
+        }
+        total_lines = total_added + total_removed;
+
+        for (k in commits) {
+          commit_pct = total_commits > 0 ? (commits[k] / total_commits) * 100 : 0;
+          lines_changed = added_lines[k] + removed_lines[k];
+          lines_pct = total_lines > 0 ? (lines_changed / total_lines) * 100 : 0;
+          printf "%s\t%d\t%d\t%d\t%.2f\t%.2f\t%s\n", author_names[k], commits[k], added_lines[k], removed_lines[k], commit_pct, lines_pct, k;
+        }
+      }
+    '
+  else
+    eval "$git_cmd" | awk -v normalize="$NORMALIZE_EMAIL" '
+      BEGIN {
+        FS = "|"
+      }
+      /^COMMIT / {
+        split($0, parts, "|");
+        author_name = substr(parts[1], 8);
+        author_email = parts[2];
+
+        # Use email as key if normalizing, otherwise use name
+        if (normalize == "true" && author_email != "") {
+          key = author_email;
+          # Store the most common name for this email
+          name_count[author_email, author_name]++;
+          if (name_count[author_email, author_name] > max_name_count[author_email]) {
+            max_name_count[author_email] = name_count[author_email, author_name];
+            author_names[author_email] = author_name;
+          }
+        } else {
+          key = author_name;
+          author_names[key] = author_name;
+        }
+
+        commits[key]++;
+        next;
+      }
+      /^[0-9]+\t[0-9]+\t/ {
+        added[key] += $1;
+        removed[key] += $2;
+      }
+      # Handle binary files (marked as "-\t-\t")
+      /^-\t-\t/ {
+        # Binary files contribute 0 to line counts
+        next;
+      }
+      END {
+        total_commits = 0;
+        total_added = 0;
+        total_removed = 0;
+        for (k in commits) {
+          total_commits += commits[k];
+          total_added += added[k];
+          total_removed += removed[k];
+        }
+        total_lines = total_added + total_removed;
+
+        for (k in commits) {
+          commit_pct = total_commits > 0 ? (commits[k] / total_commits) * 100 : 0;
+          lines_changed = added[k] + removed[k];
+          lines_pct = total_lines > 0 ? (lines_changed / total_lines) * 100 : 0;
+          printf "%s\t%d\t%d\t%d\t%.2f\t%.2f\t%s\n", author_names[k], commits[k], added[k], removed[k], commit_pct, lines_pct, k;
+        }
+      }
+    '
+  fi
 }
 
 # Sort statistics based on user preference
@@ -290,21 +546,35 @@ sort_stats() {
   local sort_field="$1"
   local reverse="$2"
 
-  local sort_col
-  case "$sort_field" in
-    commits) sort_col=2 ;;
-    additions) sort_col=3 ;;
-    deletions) sort_col=4 ;;
-    lines) sort_col=3,4 ;;
-    *) sort_col=2 ;;
-  esac
+  # If sorting by lines, we need to add a computed column
+  if [[ "$sort_field" == "lines" ]]; then
+    # Add a column with total lines (added + removed) as column 8
+    awk -F'\t' '{
+      lines = $3 + $4;
+      print $0 "\t" lines
+    }' | {
+      local sort_opts="-t$'\t' -k8,8 -n"
+      if [[ "$reverse" == false ]]; then
+        sort_opts="${sort_opts} -r"
+      fi
+      eval "sort $sort_opts" | cut -f1-7
+    }
+  else
+    local sort_col
+    case "$sort_field" in
+      commits) sort_col=2 ;;
+      additions) sort_col=3 ;;
+      deletions) sort_col=4 ;;
+      *) sort_col=2 ;;
+    esac
 
-  local sort_opts="-t$'\t' -k${sort_col} -n"
-  if [[ "$reverse" == false ]]; then
-    sort_opts="${sort_opts} -r"
+    local sort_opts="-t$'\t' -k${sort_col} -n"
+    if [[ "$reverse" == false ]]; then
+      sort_opts="${sort_opts} -r"
+    fi
+
+    eval "sort $sort_opts"
   fi
-
-  eval "sort $sort_opts"
 }
 
 # Output in different formats
@@ -312,6 +582,8 @@ output_table() {
   local data="$1"
   local total_commits="$2"
   local total_lines="$3"
+  local total_added="$4"
+  local total_removed="$5"
 
   # Print header
   printf "%-40s %8s %8s %10s %10s %8s\n" "Author" "Commits" "% Commits" "Added" "Removed" "% Lines"
@@ -328,6 +600,25 @@ output_table() {
   printf "%-40s %8s %8s %10s %10s\n" "Total" "$total_commits" "100.0%" "$total_added" "$total_removed"
 }
 
+# JSON escape helper - escape quotes and backslashes
+json_escape() {
+  local str="$1"
+  # Replace backslashes first, then quotes
+  str="${str//\\/\\\\}"
+  str="${str//\"/\\\"}"
+  # Replace newlines with \n
+  str="${str//$'\n'/\\n}"
+  printf '%s' "$str"
+}
+
+# CSV escape helper - escape quotes by doubling them
+csv_escape() {
+  local str="$1"
+  # Replace quotes with double quotes
+  str="${str//\"/\"\"}"
+  printf '%s' "$str"
+}
+
 output_json() {
   local data="$1"
   local total_commits="$2"
@@ -335,7 +626,13 @@ output_json() {
 
   echo "{"
   echo "  \"repository\": \"${REMOTE_URL}\","
-  echo "  \"branch\": \"${BRANCH}\","
+  if [[ "$ALL_BRANCHES" == true ]]; then
+    echo "  \"branches\": \"all\","
+  elif [[ -n "$TARGET_BRANCH" ]]; then
+    echo "  \"branch\": \"${TARGET_BRANCH}\","
+  else
+    echo "  \"branch\": \"${BRANCH}\","
+  fi
   echo "  \"total_commits\": ${total_commits},"
   echo "  \"total_lines_changed\": ${total_lines},"
   [[ -n "$SINCE" ]] && echo "  \"since\": \"${SINCE}\","
@@ -351,7 +648,7 @@ output_json() {
       echo ","
     fi
     printf "    {\n"
-    printf "      \"author\": \"%s\",\n" "$author"
+    printf "      \"author\": \"%s\",\n" "$(json_escape "$author")"
     printf "      \"commits\": %d,\n" "$commits"
     printf "      \"commits_percentage\": %.2f,\n" "$commit_pct"
     printf "      \"lines_added\": %d,\n" "$added"
@@ -369,14 +666,15 @@ output_csv() {
 
   echo "Author,Commits,Commits%,Lines Added,Lines Removed,Lines%"
   echo "$data" | while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
-    [[ -n "$commits" ]] && echo "\"${author}\",${commits},${commit_pct},${added},${removed},${lines_pct}"
+    [[ -n "$commits" ]] && echo "\"$(csv_escape "$author")\",${commits},${commit_pct},${added},${removed},${lines_pct}"
   done
 }
 
 output_markdown() {
   local data="$1"
   local total_commits="$2"
-  local total_removed="$3"
+  local total_added="$3"
+  local total_removed="$4"
 
   echo "| Author | Commits | % Commits | Added | Removed | % Lines |"
   echo "|--------|---------|-----------|-------|---------|---------|"
@@ -387,7 +685,7 @@ output_markdown() {
   done
 
   echo "|--------|---------|-----------|-------|---------|---------|"
-  printf "| **Total** | **%d** | **100%%** | **%s** | **%s** | |\n" \
+  printf "| **Total** | **%d** | **100%%** | **%s** | **%s** | **100%%** |\n" \
     "$total_commits" "$total_added" "$total_removed"
 }
 
@@ -406,7 +704,14 @@ main() {
   BRANCH="$(git -C "${REPO_DIR}" rev-parse --abbrev-ref HEAD)"
 
   # Calculate total commits with filters
-  local count_cmd="git -C \"${REPO_DIR}\" rev-list --count HEAD"
+  local count_cmd="git -C \"${REPO_DIR}\" rev-list --count"
+  if [[ "$ALL_BRANCHES" == true ]]; then
+    count_cmd="${count_cmd} --all"
+  elif [[ -n "$TARGET_BRANCH" ]]; then
+    count_cmd="${count_cmd} \"${TARGET_BRANCH}\""
+  else
+    count_cmd="${count_cmd} HEAD"
+  fi
   [[ "$NO_MERGES" == true ]] && count_cmd="${count_cmd} --no-merges"
   [[ "$FIRST_PARENT" == true ]] && count_cmd="${count_cmd} --first-parent"
   [[ -n "$SINCE" ]] && count_cmd="${count_cmd} --since=\"${SINCE}\""
@@ -414,10 +719,72 @@ main() {
 
   TOTAL_COMMITS="$(eval "$count_cmd" 2>/dev/null || echo "0")"
 
+  # Collect and process statistics
+  STATS="$(process_stats | sort_stats "$SORT_BY" "$REVERSE")"
+
+  # Calculate totals for output
+  total_added=0
+  total_removed=0
+  total_commits_from_stats=0
+  while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+    [[ -n "$commits" ]] || continue
+    total_commits_from_stats=$((total_commits_from_stats + commits))
+    total_added=$((total_added + added))
+    total_removed=$((total_removed + removed))
+  done <<< "$STATS"
+  total_lines=$((total_added + total_removed))
+
+  # If dedup is enabled OR file filters are used, use the actual commit count from stats
+  if [[ "$DEDUP_PATCH_ID" == true ]] || [[ ${#EXT_FILTERS[@]} -gt 0 ]] || [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
+    TOTAL_COMMITS=$total_commits_from_stats
+  fi
+
+  # Limit to top N if specified
+  if [[ -n "${TOP_N}" ]]; then
+    STATS="$(echo "${STATS}" | head -n "${TOP_N}")"
+    # Recalculate totals after limiting
+    total_added=0
+    total_removed=0
+    total_commits_from_stats=0
+    while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
+      [[ -n "$commits" ]] || continue
+      total_commits_from_stats=$((total_commits_from_stats + commits))
+      total_added=$((total_added + added))
+      total_removed=$((total_removed + removed))
+    done <<< "$STATS"
+    total_lines=$((total_added + total_removed))
+    if [[ "$DEDUP_PATCH_ID" == true ]] || [[ ${#EXT_FILTERS[@]} -gt 0 ]] || [[ ${#EXCLUDE_PATTERNS[@]} -gt 0 ]]; then
+      TOTAL_COMMITS=$total_commits_from_stats
+    fi
+    # Recalculate percentages based on new totals
+    STATS="$(echo "$STATS" | awk -F'\t' -v total_commits="$total_commits_from_stats" -v total_lines="$total_lines" '{
+      author = $1
+      commits = $2
+      added = $3
+      removed = $4
+      key = $7
+      commit_pct = (total_commits > 0) ? (commits / total_commits) * 100 : 0
+      lines_changed = added + removed
+      lines_pct = (total_lines > 0) ? (lines_changed / total_lines) * 100 : 0
+      printf "%s\t%d\t%d\t%d\t%.2f\t%.2f\t%s\n", author, commits, added, removed, commit_pct, lines_pct, key
+    }')"
+  fi
+
+  if [[ "${TOTAL_COMMITS}" -eq 0 ]]; then
+    echo "No commits found"
+    exit 0
+  fi
+
   # Output repository info (except for JSON which includes it in the object)
   if [[ "$FORMAT" != "json" ]]; then
     echo "Repository: ${REMOTE_URL}"
-    echo "Branch:     ${BRANCH}"
+    if [[ "$ALL_BRANCHES" == true ]]; then
+      echo "Branches:   All"
+    elif [[ -n "$TARGET_BRANCH" ]]; then
+      echo "Branch:     ${TARGET_BRANCH}"
+    else
+      echo "Branch:     ${BRANCH}"
+    fi
     echo "Commits:    ${TOTAL_COMMITS}"
     [[ -n "$SINCE" ]] && echo "Since:      ${SINCE}"
     [[ -n "$UNTIL" ]] && echo "Until:      ${UNTIL}"
@@ -426,33 +793,10 @@ main() {
     echo ""
   fi
 
-  if [[ "${TOTAL_COMMITS}" -eq 0 ]]; then
-    echo "No commits found"
-    exit 0
-  fi
-
-  # Collect and process statistics
-  STATS="$(process_stats | sort_stats "$SORT_BY" "$REVERSE")"
-
-  # Limit to top N if specified
-  if [[ -n "${TOP_N}" ]]; then
-    STATS="$(echo "${STATS}" | head -n "${TOP_N}")"
-  fi
-
-  # Calculate totals for output
-  total_added=0
-  total_removed=0
-  while IFS=$'\t' read -r author commits added removed commit_pct lines_pct key; do
-    [[ -n "$commits" ]] || continue
-    total_added=$((total_added + added))
-    total_removed=$((total_removed + removed))
-  done <<< "$STATS"
-  total_lines=$((total_added + total_removed))
-
   # Output in selected format
   case "$FORMAT" in
     table)
-      output_table "$STATS" "$TOTAL_COMMITS" "$total_lines"
+      output_table "$STATS" "$TOTAL_COMMITS" "$total_lines" "$total_added" "$total_removed"
       ;;
     json)
       output_json "$STATS" "$TOTAL_COMMITS" "$total_lines"
@@ -461,7 +805,7 @@ main() {
       output_csv "$STATS"
       ;;
     markdown)
-      output_markdown "$STATS" "$TOTAL_COMMITS" "$total_removed"
+      output_markdown "$STATS" "$TOTAL_COMMITS" "$total_added" "$total_removed"
       ;;
   esac
 }

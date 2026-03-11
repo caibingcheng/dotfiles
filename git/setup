@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh" 2>/dev/null || true
+
 git_check_user() {
     [[ -n "$(git config --global user.name 2>/dev/null || true)" ]] && \
     [[ -n "$(git config --global user.email 2>/dev/null || true)" ]]
@@ -10,6 +13,13 @@ git_check_user() {
 
 git_config_user() {
     local user_name="" user_email=""
+
+    # Skip interactive config in CI environment
+    if [[ "${CI:-}" == "true" ]]; then
+        log_info "CI environment detected, skipping interactive git config"
+        return 0
+    fi
+
     while [[ -z "${user_name}" ]]; do
         read -r -p "    user.name: " user_name
     done

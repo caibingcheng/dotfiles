@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# fzf-kill: Interactive process killer
+# Usage: fzf-kill [options]
+#   -s SIGNAL    Signal to send (default: 15/TERM)
+#   -u USER      Filter by user
+
+set -euo pipefail
+
+signal=15
+user_filter=""
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s|--signal) signal="$2"; shift 2 ;;
+        -u|--user) user_filter="$2"; shift 2 ;;
+        -h|--help)
+            echo "Usage: fzf-kill [options]"
+            echo ""
+            echo "Options:"
+            echo "  -s, --signal SIGNAL    Signal to send (default: 15, use 9 for KILL)"
+            echo "  -u, --user USER        Filter processes by user"
+            echo "  -h, --help             Show this help message"
+            echo ""
+            echo "Signals:"
+            echo "  1  - HUP (Hang up)"
+            echo "  9  - KILL (Force kill)"
+            echo "  15 - TERM (Graceful termination, default)"
+            echo "  18 - CONT (Continue)"
+            echo "  19 - STOP (Stop)"
+            exit 0
+            ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# Build ps command
+if [[ -n "$user_filter" ]]; then
+    ps_cmd="ps aux -u $user_filter"
+else
+    ps_cmd="ps aux"
+fi
+
+# Build preview command showing process details
+preview_cmd='pid=$(echo {1} | tr -d " "); 
+    echo "PID: $pid"; 
+    echo "User: {2}"; 
+    echo "CPU: {3}%"; 
+    echo "MEM: {4}%"; 
+    echo "Command: {11}";
+    echo "";
+    echo "Process tree:";
+    pstree -p -A -T $pid 2>/dev/null || echo "(no child processes)";
+    echo "";
+    echo "Open files (first 10):";
+    lsof -p $pid 2>/dev/null | head -11 || echo "(cannot list open files)"'
+
+# Header with instructions
+header="Select process to kill | Signal: $signal | CTRL-A: Select All | ENTER: Kill selected"
+
+# Run fzf
+selected=$($ps_cmd | fzf --multi --header-lines=1 --ansi \
+    --prompt="Process > " \
+    --header="$header" \
+    --preview "$preview_cmd" \
+    --preview-window=right:40%:wrap \
+    --bind 'ctrl-a:select-all' \
+    --bind 'ctrl-d:deselect-all' \
+    --bind 'ctrl-s:toggle-sort')
+
+[[ -z "$selected" ]] && exit 0
+
+# Extract PIDs and kill
+pids=$(echo "$selected" | awk '{print $2}')
+
+if [[ -z "$pids" ]]; then
+    echo "No processes selected"
+    exit 0
+fi
+
+echo ""
+echo "Processes to kill (signal $signal):"
+echo "$selected" | awk '{printf "  %-8s %-8s %5s%% %5s%% %s\n", $2, $1, $3, $4, $11}'
+echo ""
+
+# Show process tree for selected processes
+echo "Process tree:"
+echo "$pids" | xargs pstree -p -A -T 2>/dev/null || true
+echo ""
+
+# Confirm
+if [[ "$signal" == "9" ]]; then
+    echo -e "\033[31mWARNING: Using signal 9 (KILL) - process will terminate immediately without cleanup!\033[0m"
+fi
+
+read -p "Send signal $signal to these processes? [y/N] " -n 1 -r
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "$pids" | xargs kill -"$signal" 2>/dev/null && echo "Signal $signal sent successfully" || echo "Failed to send signal"
+else
+    echo "Cancelled"
+fi

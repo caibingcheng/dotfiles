@@ -1,0 +1,117 @@
+#!/bin/bash
+# Docker aliases and functions
+
+# Docker 基础别名
+alias d='docker'
+alias dc='docker compose'
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias di='docker images'
+alias dn='docker network'
+alias dv='docker volume'
+
+# Docker 常用操作
+alias dstop='docker stop'
+alias dstart='docker start'
+alias drm='docker rm'
+alias drmi='docker rmi'
+alias dex='docker exec -it'
+alias dlogs='docker logs -f'
+alias dinspect='docker inspect'
+alias dip='docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"'
+
+# Docker Compose 别名
+alias dcu='docker compose up -d'
+alias dcd='docker compose down'
+alias dcr='docker compose restart'
+alias dcb='docker compose build'
+alias dcl='docker compose logs -f'
+alias dcpull='docker compose pull'
+alias dce='docker compose exec'
+alias dcs='docker compose ps'
+
+# Docker 清理别名
+alias dprune='docker system prune -f'
+alias dpruneall='docker system prune -af --volumes'
+alias dprunevolumes='docker volume prune -f'
+alias dpruneimages='docker image prune -f'
+
+# Docker 构建别名
+alias db='docker build'
+alias dbt='docker build -t'
+
+# Docker 运行别名
+alias dr='docker run --rm -it'
+alias drp='docker run --rm -it -p'
+alias drv='docker run --rm -it -v "$(pwd):/workspace" -w /workspace'
+
+# Docker 实用函数
+
+# 进入容器 shell
+dshell() {
+    local container=$1
+    shift
+    local shell=${1:-/bin/bash}
+    docker exec -it "$container" "$shell"
+}
+
+# 查看容器日志（带颜色）
+dlog() {
+    local container=$1
+    local lines=${2:-100}
+    docker logs --tail="$lines" -f "$container" 2>&1 | while IFS= read -r line; do
+        echo -e "\033[36m[$(date '+%Y-%m-%d %H:%M:%S')]\033[0m $line"
+    done
+}
+
+# 复制文件到/从容器
+dcp() {
+    docker cp "$@"
+}
+
+# 查看容器资源使用
+dstats() {
+    docker stats --format "table {{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
+}
+
+# 批量停止容器
+dstopall() {
+    docker ps -q | xargs -r docker stop
+}
+
+# 批量删除停止的容器
+dclean() {
+    docker ps -aq --filter "status=exited" | xargs -r docker rm
+}
+
+# 批量删除无标签镜像
+dcleani() {
+    docker images -q --filter "dangling=true" | xargs -r docker rmi
+}
+
+# Docker Compose 便捷函数
+
+# 快速启动常用开发环境
+devup() {
+    local service=${1:-}
+    if [[ -n "$service" ]]; then
+        docker compose up -d "$service"
+    else
+        docker compose up -d
+    fi
+}
+
+# 快速停止并清理
+devdown() {
+    docker compose down --remove-orphans
+}
+
+# 重建并启动
+devrebuild() {
+    docker compose down
+    docker compose build --no-cache
+    docker compose up -d
+}
+
+# 查看所有 compose 项目
+alias dcls='docker compose ls'

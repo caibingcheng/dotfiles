@@ -1,0 +1,68 @@
+# Aider configuration file
+# https://aider.chat/docs/config.html
+
+# 模型配置
+# model: gpt-4o                  # 默认模型
+# weak_model: gpt-4o-mini        # 弱模型（用于简单任务）
+# editor_model: gpt-4o           # 编辑器模型
+
+# 输出设置
+stream: true                     # 启用流式输出
+code_theme: monokai             # 代码主题
+show_diffs: true                # 显示差异
+show_model_warnings: true       # 显示模型警告
+
+# 代码编辑设置
+auto_commits: true              # 自动提交更改
+dirty_commits: true             # 允许在未提交的更改上工作
+commit_prompt: "Commit message:"  # 提交提示词
+
+# 上下文管理
+cache_prompts: true             # 缓存提示
+max_chat_history_tokens: 10000  # 最大聊天历史 token 数
+
+# 文件处理
+auto_lint: true                 # 自动运行 linter
+lint_cmd:                       # Linter 命令
+  python: "python -m py_compile"
+  javascript: "eslint --fix"
+  typescript: "eslint --fix"
+
+# 架构师模式
+architect: false                # 默认关闭架构师模式
+
+# 语音设置
+voice_language: zh              # 语音识别语言
+
+# 浏览器设置
+browser: false                  # 不使用浏览器模式
+
+# 其他设置
+dark_mode: true                 # 暗色模式
+pretty: true                    # 美化输出
+verbose: false                  # 详细输出
+
+# API 配置（通过环境变量更安全）
+# 在 ~/.bashrc 或 ~/.bash_profile 中设置：
+# export OPENAI_API_KEY=your_key_here
+# export ANTHROPIC_API_KEY=your_key_here
+
+# 忽略文件模式
+ignore_patterns:
+  - "*.pyc"
+  - "__pycache__/"
+  - "node_modules/"
+  - ".git/"
+  - "*.min.js"
+  - "*.min.css"
+  - "dist/"
+  - "build/"
+  - ".venv/"
+  - "*.egg-info/"
+
+# 只读文件（上下文但不编辑）
+read_only_patterns:
+  - "*.md"
+  - "README*"
+  - "LICENSE"
+  - "CHANGELOG*"

@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh"
+
+log_info "Configuring starship..."
+
+# Install starship if not present
+STARSHIP_INSTALLED=false
+if ! command_exists starship; then
+    log_info "Installing starship..."
+    
+    # Priority 1: Homebrew
+    if has_brew; then
+        log_info "Installing starship via Homebrew..."
+        if brew_install starship 2>/dev/null; then
+            STARSHIP_INSTALLED=true
+            log_info "Starship installed via Homebrew"
+        else
+            log_warn "Failed to install starship via Homebrew"
+        fi
+    fi
+    
+    # Priority 2: Cargo (if Rust is available)
+    if [[ "$STARSHIP_INSTALLED" != true ]] && command_exists cargo; then
+        log_info "Installing starship via Cargo..."
+        if cargo install starship 2>/dev/null; then
+            STARSHIP_INSTALLED=true
+            log_info "Starship installed via Cargo"
+        else
+            log_warn "Failed to install starship via Cargo"
+        fi
+    fi
+    
+    # Priority 2: apt (for Ubuntu/Debian)
+    if [[ "$STARSHIP_INSTALLED" != true ]] && command_exists apt-get; then
+        log_info "Installing starship via apt..."
+        if sudo apt-get update && sudo apt-get install -y starship 2>/dev/null; then
+            STARSHIP_INSTALLED=true
+            log_info "Starship installed via apt"
+        else
+            log_warn "Failed to install starship via apt"
+        fi
+    fi
+    
+    # Priority 3: Direct download from GitHub releases (without curl | sh)
+    if [[ "$STARSHIP_INSTALLED" != true ]]; then
+        log_info "Installing starship from GitHub releases..."
+        
+        # Get latest release version
+        STARSHIP_VERSION="1.21.1"  # Pin to specific version
+        
+        # Determine architecture
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)  STARSHIP_ARCH="x86_64-unknown-linux-gnu" ;;
+            aarch64) STARSHIP_ARCH="aarch64-unknown-linux-gnu" ;;
+            armv7l)  STARSHIP_ARCH="armv7-unknown-linux-gnueabihf" ;;
+            *)       log_warn "Unsupported architecture: $ARCH"; STARSHIP_ARCH="" ;;
+        esac
+        
+        if [[ -n "$STARSHIP_ARCH" ]]; then
+            TEMP_DIR=$(mktemp -d)
+            DOWNLOAD_URL="https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${STARSHIP_ARCH}.tar.gz"
+            
+            if curl -fsSL "$DOWNLOAD_URL" -o "${TEMP_DIR}/starship.tar.gz" 2>/dev/null; then
+                if tar -xzf "${TEMP_DIR}/starship.tar.gz" -C "$TEMP_DIR" 2>/dev/null; then
+                    if mv "${TEMP_DIR}/starship" "${HOME}/.local/bin/starship" 2>/dev/null || \
+                       sudo mv "${TEMP_DIR}/starship" "/usr/local/bin/starship" 2>/dev/null; then
+                        STARSHIP_INSTALLED=true
+                        log_info "Starship installed from GitHub releases (v${STARSHIP_VERSION})"
+                    else
+                        log_warn "Failed to move starship binary to PATH"
+                    fi
+                else
+                    log_warn "Failed to extract starship archive"
+                fi
+            else
+                log_warn "Failed to download starship from GitHub releases"
+            fi
+            
+            rm -rf "$TEMP_DIR"
+        fi
+    fi
+else
+    STARSHIP_INSTALLED=true
+fi
+
+# Skip configuration if installation failed
+if [[ "$STARSHIP_INSTALLED" != true ]]; then
+    log_warn "Starship installation failed, skipping configuration"
+    exit 0
+fi
+
+# Create config directory
+ensure_dir "${HOME}/.config"
+
+# Link starship config
+safe_link "${DOTFILES_ROOT}/starship/starship.toml" "${HOME}/.config/starship.toml"
+
+# Add starship init to shell configs
+if ! grep -q "starship init bash" "${HOME}/.bashrc" 2>/dev/null; then
+    log_info "Adding starship to .bashrc..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# Starship prompt' >> "${HOME}/.bashrc"
+    echo 'eval "$(starship init bash)"' >> "${HOME}/.bashrc"
+fi
+
+log_info "Starship configuration complete!"
