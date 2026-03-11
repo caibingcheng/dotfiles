@@ -59,8 +59,8 @@ if [ "${TOTAL_COMMITS}" -eq 0 ]; then
   exit 0
 fi
 
-printf "%-40s %8s %10s %10s\n" "Author" "Commits" "Added" "Removed"
-echo "------------------------------------------------------------------------"
+printf "%-40s %8s %8s %10s %10s %8s\n" "Author" "Commits" "% Commits" "Added" "Removed" "% Lines"
+echo "--------------------------------------------------------------------------------------------"
 
 # Collect per-author stats in one pass using git log with numstat
 STATS="$(git -C "${REPO_DIR}" log --numstat --format="COMMIT %aN" | awk '
@@ -74,8 +74,20 @@ STATS="$(git -C "${REPO_DIR}" log --numstat --format="COMMIT %aN" | awk '
     removed[author] += $2
   }
   END {
+    # Calculate totals first
+    total_commits = 0
+    total_lines = 0
     for (a in commits) {
-      printf "%d\t%s\t%d\t%d\n", commits[a], a, added[a]+0, removed[a]+0
+      total_commits += commits[a]
+      total_lines += (added[a] + removed[a])
+    }
+
+    # Output with percentages
+    for (a in commits) {
+      commit_pct = total_commits > 0 ? (commits[a] / total_commits) * 100 : 0
+      lines_changed = added[a] + removed[a]
+      lines_pct = total_lines > 0 ? (lines_changed / total_lines) * 100 : 0
+      printf "%d\t%s\t%d\t%d\t%.1f\t%.1f\t%d\t%d\n", commits[a], a, added[a]+0, removed[a]+0, commit_pct, lines_pct, total_commits, total_lines
     }
   }
 ' | sort -rn)"
@@ -86,6 +98,6 @@ if [ -n "${TOP_N}" ]; then
 fi
 
 # Print formatted results
-echo "${STATS}" | while IFS=$'\t' read -r commits author added removed; do
-  [ -n "${commits}" ] && printf "%-40s %8d %10d %10d\n" "${author}" "${commits}" "${added}" "${removed}"
+echo "${STATS}" | while IFS=$'\t' read -r commits author added removed commit_pct lines_pct total_commits total_lines; do
+  [ -n "${commits}" ] && printf "%-40s %8d %7.1f%% %10d %10d %7.1f%%\n" "${author}" "${commits}" "${commit_pct}" "${added}" "${removed}" "${lines_pct}"
 done
