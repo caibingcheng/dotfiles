@@ -1,47 +1,118 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-# update git hosts
-github_hosts_url=https://cdn.jsdelivr.net/gh/caibingcheng/hosts@main/dns/github
-test -f /tmp/hosts || curl -s $github_hosts_url -o /tmp/hosts
-$SUDO bash -c "/bin/cp /etc/hosts /tmp/hosts_tmp"
-$SUDO bash -c "/bin/sed -i '/github/d' /tmp/hosts_tmp"
-$SUDO bash -c "/bin/cat /tmp/hosts >>/tmp/hosts_tmp"
-$SUDO cp /tmp/hosts_tmp /etc/hosts
+set -euo pipefail
 
-test -z "${APT_UPDATED_DONE}" && $SUDO apt update && export APT_UPDATED_DONE=true
-$SUDO apt install curl wget git preload -y
-$SUDO apt install vim make -y
-$SUDO apt install build-essential gcc g++ gdb -y
-$SUDO apt install python3 python3-pip python3-venv python3-dev pipx -y
+# =============================================================================
+# Dotfiles Minimal Installation
+# Installs essential tools and configures the base environment
+# =============================================================================
 
-# install rust
-test -x "$(command -v rustup)" || source ${DOTFILES_ROOT}/rust/install
+# Update git hosts
+update_github_hosts() {
+    local hosts_url="https://cdn.jsdelivr.net/gh/caibingcheng/hosts@main/dns/github"
+    local tmp_hosts="/tmp/hosts_github"
 
-# install thefuck
-# test -x "$(command -v thefuck)" || pipx install thefuck
+    if [[ ! -f "${tmp_hosts}" ]]; then
+        echo "Downloading GitHub hosts..."
+        if ! curl -fsSL "${hosts_url}" -o "${tmp_hosts}" 2>/dev/null; then
+            echo "Warning: Failed to download GitHub hosts, skipping..." >&2
+            return 0
+        fi
+    fi
 
-#install pyenv
-# test -x "$(command -v pyenv)" || "curl https://pyenv.run | bash"
+    ${SUDO} bash -c '
+        set -euo pipefail
+        tmp_hosts_tmp="$(mktemp)"
+        trap "rm -f \"$tmp_hosts_tmp\"" EXIT
+        grep -v github /etc/hosts >"$tmp_hosts_tmp"
+        cat "$1" >>"$tmp_hosts_tmp"
+        cp "$tmp_hosts_tmp" /etc/hosts
+    ' bash "${tmp_hosts}"
+}
 
-# install brew
-if [[ "$(command -v brew)" == "" ]]; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> ~/.bashrc
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
+# Install base packages
+install_base_packages() {
+    if [[ -z "${APT_UPDATED_DONE:-}" ]]; then
+        ${SUDO} apt update
+        export APT_UPDATED_DONE=true
+    fi
 
-export HOMEBREW_API_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles/api"
-export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles"
-export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.ustc.edu.cn/brew.git"
-export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.ustc.edu.cn/homebrew-core.git"
-brew update
+    ${SUDO} apt install -y \
+        curl wget git preload \
+        vim make \
+        build-essential gcc g++ gdb \
+        python3 python3-pip python3-venv python3-dev pipx
+}
 
-export HOMEBREW_NO_AUTO_UPDATE=true
-brew bundle --file ${DOTFILES_ROOT}/brew/minimal.brewfile install
+# Install Homebrew
+install_homebrew() {
+    if ! command -v brew &>/dev/null; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        {
+            echo
+            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+        } >> "${HOME}/.bashrc"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    fi
 
-# tldr
-test -x "$(command -v tldr)" && tldr --update
+    # Configure Homebrew mirrors
+    export HOMEBREW_API_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles/api"
+    export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.ustc.edu.cn/homebrew-bottles"
+    export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.ustc.edu.cn/brew.git"
+    export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.ustc.edu.cn/homebrew-core.git"
 
-# tgpt
-test -x "$(command -v tgpt)" || go install github.com/aandrew-me/tgpt/v2@latest
-test -x "$(command -v exa)" || cargo install exa
+    brew update
+    export HOMEBREW_NO_AUTO_UPDATE=true
+    brew bundle --file "${DOTFILES_ROOT}/brew/minimal.brewfile" install
+}
+
+# Install Rust
+install_rust() {
+    if ! command -v rustup &>/dev/null; then
+        echo "Installing Rust..."
+        # shellcheck source=/dev/null
+        source "${DOTFILES_ROOT}/rust/install"
+    fi
+}
+
+# Update tldr cache
+update_tldr() {
+    if command -v tldr &>/dev/null; then
+        tldr --update 2>/dev/null || true
+    fi
+}
+
+# Install Go tools
+install_go_tools() {
+    if command -v go &>/dev/null; then
+        if ! command -v tgpt &>/dev/null; then
+            echo "Installing tgpt..."
+            go install github.com/aandrew-me/tgpt/v2@latest
+        fi
+    fi
+
+    if command -v cargo &>/dev/null; then
+        if ! command -v exa &>/dev/null; then
+            echo "Installing exa..."
+            cargo install exa
+        fi
+    fi
+}
+
+# Main
+main() {
+    echo "Starting minimal installation..."
+
+    update_github_hosts
+    install_base_packages
+    install_rust
+    install_homebrew
+    update_tldr
+    install_go_tools
+
+    echo "Minimal installation completed!"
+}
+
+main "$@"

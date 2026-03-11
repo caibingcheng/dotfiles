@@ -1,53 +1,60 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-source ${DOTFILES_ROOT}/minimal
+set -euo pipefail
 
-test -z "${APT_UPDATED_DONE}" && $SUDO apt update && export APT_UPDATED_DONE=true
-$SUDO apt install gnome-tweaks meld wireshark -y
-$SUDO apt install ibus-rime librime-data-pinyin-simp -y
-$SUDO apt install flameshot -y
+source "${DOTFILES_ROOT}/minimal"
 
-export HOMEBREW_NO_AUTO_UPDATE=true
-brew bundle --file ${DOTFILES_ROOT}/brew/standard.brewfile
-
-# install or update vscode
-repo_pool="https://packages.microsoft.com/repos/vscode/pool/main/c/code/"
-# get latest version
-version=$(test -x "$(command -v code)" && code --version | grep -oP '(\d+\.)+\d+' || echo "0.0.0")
-latest_version=$(curl -s $repo_pool | grep -oP 'code_.*?_amd64\.deb' | sort -V | tail -n 1)
-# version in latest_version string
-echo "Latest version: $latest_version"
-echo "Current version: $version"
-if [[ $latest_version == *"$version"* ]]; then
-    echo "VSCode is up to date"
-elif [[ $latest_version == "" ]]; then
-    echo "Failed to get latest version"
-else
-    download_link="${repo_pool}${latest_version}"
-    echo "Downloading $download_link"
-    wget --no-check-certificate -O /tmp/vscode.deb $download_link -q --show-progress &&
-    $SUDO dpkg -i /tmp/vscode.deb &&
-    $SUDO apt install -f -y &&
-    $SUDO rm -f /tmp/vscode.deb
+if [[ -z "${APT_UPDATED_DONE:-}" ]]; then
+    ${SUDO} apt update
+    export APT_UPDATED_DONE=true
 fi
 
-# install or update edge
-repo_pool="https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/"
-# get latest version
-version=$(test -x "$(command -v microsoft-edge-stable)" && microsoft-edge-stable --version | grep -oP '(\d+\.)+\d+' || echo "0.0.0")
-latest_version=$(curl -s $repo_pool | grep -oP 'microsoft-edge-stable_.*?_amd64\.deb' | sort -V | tail -n 1)
-# version in latest_version string
-echo "Latest version: $latest_version"
-echo "Current version: $version"
-if [[ $latest_version == *"$version"* ]]; then
-    echo "Edge is up to date"
-elif [[ $latest_version == "" ]]; then
-    echo "Failed to get latest version"
+${SUDO} apt install -y gnome-tweaks meld wireshark
+${SUDO} apt install -y ibus-rime librime-data-pinyin-simp
+${SUDO} apt install -y flameshot
+
+export HOMEBREW_NO_AUTO_UPDATE=true
+brew bundle --file "${DOTFILES_ROOT}/brew/standard.brewfile"
+
+# Install or update vscode
+vscode_repo="https://packages.microsoft.com/repos/vscode/pool/main/c/code/"
+vscode_version=$(command -v code &>/dev/null && code --version | grep -oP '(\d+\.)+\d+' || echo "0.0.0")
+vscode_latest=$(curl -fsSL "${vscode_repo}" 2>/dev/null | grep -oP 'code_.*?_amd64\.deb' | sort -V | tail -n 1 || true)
+
+echo "VSCode - Latest: ${vscode_latest}, Current: ${vscode_version}"
+
+if [[ "${vscode_latest}" == *"${vscode_version}"* ]]; then
+    echo "VSCode is up to date"
+elif [[ -z "${vscode_latest}" ]]; then
+    echo "Failed to get latest VSCode version"
 else
-    download_link="${repo_pool}${latest_version}"
-    echo "Downloading $download_link"
-    wget --no-check-certificate -O /tmp/edge.deb $download_link -q --show-progress &&
-    $SUDO dpkg -i /tmp/edge.deb &&
-    $SUDO apt install -f -y &&
-    $SUDO rm -f /tmp/edge.deb
+    vscode_url="${vscode_repo}${vscode_latest}"
+    echo "Downloading ${vscode_url}"
+    if wget --https-only --tries=3 --timeout=30 -q --show-progress -O /tmp/vscode.deb "${vscode_url}"; then
+        ${SUDO} dpkg -i /tmp/vscode.deb
+        ${SUDO} apt install -f -y
+        rm -f /tmp/vscode.deb
+    fi
+fi
+
+# Install or update edge
+edge_repo="https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/"
+edge_version=$(command -v microsoft-edge-stable &>/dev/null && microsoft-edge-stable --version | grep -oP '(\d+\.)+\d+' || echo "0.0.0")
+edge_latest=$(curl -fsSL "${edge_repo}" 2>/dev/null | grep -oP 'microsoft-edge-stable_.*?_amd64\.deb' | sort -V | tail -n 1 || true)
+
+echo "Edge - Latest: ${edge_latest}, Current: ${edge_version}"
+
+if [[ "${edge_latest}" == *"${edge_version}"* ]]; then
+    echo "Edge is up to date"
+elif [[ -z "${edge_latest}" ]]; then
+    echo "Failed to get latest Edge version"
+else
+    edge_url="${edge_repo}${edge_latest}"
+    echo "Downloading ${edge_url}"
+    if wget --https-only --tries=3 --timeout=30 -q --show-progress -O /tmp/edge.deb "${edge_url}"; then
+        ${SUDO} dpkg -i /tmp/edge.deb
+        ${SUDO} apt install -f -y
+        rm -f /tmp/edge.deb
+    fi
 fi

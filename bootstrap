@@ -1,93 +1,292 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
+# shellcheck disable=SC1090,SC1091
 
-current_dir=$(pwd)
-valid_install_level=(minimal standard)
-config_install_level=
-if [[ -f ${HOME}/.dotfiles_install_level ]]; then
-    config_install_level=$(cat ${HOME}/.dotfiles_install_level)
-fi
-if [[ ! -z $1 ]]; then
-    if [[ " ${valid_install_level[@]} " =~ " $1 " ]]; then
-        config_install_level=$1
-    else
-        echo "Invalid install level: $1"
-        echo "Valid install levels: ${valid_install_level[@]}"
+set -euo pipefail
+
+# =============================================================================
+# Dotfiles Bootstrap Script
+# Sets up dotfiles and installs tools based on the selected level
+# =============================================================================
+
+readonly DOTFILES_REPO="https://github.com/caibingcheng/dotfiles.git"
+readonly VALID_INSTALL_LEVELS=(minimal standard)
+readonly INIT_MARKER="${HOME}/.dotfiles_initialized"
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+log_debug() { echo -e "${BLUE}[DEBUG]${NC} $1"; }
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS] [INSTALL_LEVEL]
+
+Bootstrap dotfiles installation with configurable options.
+
+INSTALL_LEVEL:
+    minimal     Install minimal set of tools
+    standard    Install standard set of tools (includes minimal)
+
+OPTIONS:
+    -c, --config-only   Only run setup (configure dotfiles), skip tool installation
+    -u, --update        Force tool installation/update (even if not first run)
+    -h, --help          Show this help message
+
+BEHAVIOR:
+    First run (no ${INIT_MARKER}):
+        - Runs setup + tool installation (if level specified)
+    Subsequent runs:
+        - By default: only runs setup (updates dotfiles configuration)
+        - With --update: runs setup + tool installation
+    With --config-only:
+        - Always: only runs setup, never installs tools
+
+EXAMPLES:
+    $(basename "$0")                    # First time setup
+    $(basename "$0") minimal            # Install minimal tools
+    $(basename "$0") standard           # Install standard tools
+    $(basename "$0") -c                 # Only update dotfiles config
+    $(basename "$0") -u minimal         # Force update minimal tools
+    $(basename "$0") -c -u              # Invalid: --config-only and --update conflict
+EOF
+}
+
+# Load saved install level from file if it exists
+load_saved_install_level() {
+    local saved_level
+    if [[ -f "${HOME}/.dotfiles_install_level" ]]; then
+        saved_level=$(cat "${HOME}/.dotfiles_install_level")
+        if [[ -n "${saved_level}" && " ${VALID_INSTALL_LEVELS[*]} " =~ " ${saved_level} " ]]; then
+            echo "${saved_level}"
+        fi
+    fi
+}
+
+# Parse command line arguments and set global variables
+parse_args() {
+    CONFIG_ONLY=false
+    FORCE_UPDATE=false
+    INSTALL_LEVEL=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -c|--config-only)
+                CONFIG_ONLY=true
+                shift
+                ;;
+            -u|--update)
+                FORCE_UPDATE=true
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+            *)
+                if [[ -z "${INSTALL_LEVEL}" ]]; then
+                    INSTALL_LEVEL="$1"
+                else
+                    log_error "Multiple install levels specified"
+                    usage
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ "${CONFIG_ONLY}" == true && "${FORCE_UPDATE}" == true ]]; then
+        log_error "--config-only and --update are mutually exclusive"
+        usage
         exit 1
     fi
-fi
-echo "Install level: $config_install_level"
-echo $config_install_level >${HOME}/.dotfiles_install_level
 
-# check if dotfiles exists
-if [[ ! -d ${HOME}/.dotfiles ]]; then
-    git clone https://github.com/caibingcheng/dotfiles.git ${HOME}/.dotfiles || exit 1
-    cd ${HOME}/.dotfiles && current_dir=$(pwd) || exit 1
-fi
+    # Validate install level if provided
+    if [[ -n "${INSTALL_LEVEL}" && ! " ${VALID_INSTALL_LEVELS[*]} " =~ " ${INSTALL_LEVEL} " ]]; then
+        log_error "Invalid install level: ${INSTALL_LEVEL}"
+        log_error "Valid levels: ${VALID_INSTALL_LEVELS[*]}"
+        exit 1
+    fi
+}
 
-if [[ -d ${HOME}/.dotfiles ]]; then
-    cd ${HOME}/.dotfiles && current_dir=$(pwd) || exit 1
-fi
-export DOTFILES_ROOT=$current_dir
-export NIXPKGS_ALLOW_UNFREE=1
+# Check if this is the first run
+is_first_run() {
+    [[ ! -f "${INIT_MARKER}" ]]
+}
 
-# check super user privileges
-export SUDO=$(command -v sudo)
+# Mark as initialized
+mark_initialized() {
+    date >"${INIT_MARKER}"
+}
 
-# update apt source
-if [[ ! -f /etc/apt/sources.list.bak ]]; then
-    $SUDO apt update
-    $SUDO apt install ca-certificates -y
-    $SUDO cp /etc/apt/sources.list /etc/apt/sources.list.bak
-    $SUDO sed -i -r 's#http://(archive|security).ubuntu.com#https://mirrors.aliyun.com#g' /etc/apt/sources.list
-    $SUDO apt update
-    export APT_UPDATED_DONE=true
-fi
+# Clone or update dotfiles repository
+setup_dotfiles_repo() {
+    if [[ ! -d "${HOME}/.dotfiles" ]]; then
+        log_info "Cloning dotfiles repository..."
+        git clone "${DOTFILES_REPO}" "${HOME}/.dotfiles"
+    fi
 
-# config timezone
-test ! -f /etc/timezone && echo "Asia\nShanghai" | $SUDO apt install tzdata -y
-$SUDO timedatectl set-timezone Asia/Shanghai
+    cd "${HOME}/.dotfiles" || {
+        log_error "Failed to enter dotfiles directory"
+        exit 1
+    }
+}
 
-# configure dotfiles
-echo "Configuring bin"
-source ${DOTFILES_ROOT}/bin/setup
+# Configure APT sources for faster downloads in China
+configure_apt_sources() {
+    if [[ ! -f /etc/apt/sources.list.bak ]]; then
+        log_info "Configuring APT sources..."
+        ${SUDO} apt-get update
+        ${SUDO} apt-get install -y ca-certificates
+        ${SUDO} cp /etc/apt/sources.list /etc/apt/sources.list.bak
+        ${SUDO} sed -i -r 's#http://(archive|security).ubuntu.com#https://mirrors.aliyun.com#g' /etc/apt/sources.list
+        ${SUDO} apt-get update
+        export APT_UPDATED_DONE=true
+    fi
+}
 
-echo "Configuring git"
-source ${DOTFILES_ROOT}/git/setup
+# Configure timezone
+configure_timezone() {
+    log_info "Configuring timezone..."
+    if [[ ! -f /etc/timezone ]]; then
+        ${SUDO} DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+    fi
+    ${SUDO} timedatectl set-timezone Asia/Shanghai 2>/dev/null || true
+}
 
-echo "Configuring ssh"
-source ${DOTFILES_ROOT}/ssh/setup
+# Run a setup script from a module
+run_module_setup() {
+    local module="$1"
+    local setup_script="${DOTFILES_ROOT}/${module}/setup"
 
-echo "Configuring bash"
-source ${DOTFILES_ROOT}/bash/setup
+    if [[ -f "${setup_script}" ]]; then
+        log_info "Configuring ${module}..."
+        source "${setup_script}"
+    else
+        log_warn "No setup script found for ${module}"
+    fi
+}
 
-echo "Configuring tmux"
-source ${DOTFILES_ROOT}/tmux/setup
+# Install based on selected level
+install_tools() {
+    local level="$1"
 
-echo "Configuring clang"
-source ${DOTFILES_ROOT}/clang/setup
+    case "${level}" in
+        minimal)
+            log_info "Installing minimal configuration..."
+            source "${DOTFILES_ROOT}/minimal"
+            ;;
+        standard)
+            log_info "Installing standard configuration..."
+            source "${DOTFILES_ROOT}/standard"
+            ;;
+        *)
+            log_info "No install level specified, skipping tool installation"
+            ;;
+    esac
+}
 
-echo "Configuring tealdeer"
-source ${DOTFILES_ROOT}/tealdeer/setup
+# Run all module setups
+run_all_setups() {
+    run_module_setup "bin"
+    run_module_setup "git"
+    run_module_setup "ssh"
+    run_module_setup "bash"
+    run_module_setup "tmux"
+    run_module_setup "clang"
+    run_module_setup "tealdeer"
+    run_module_setup "opencode"
+    run_module_setup "os"
+}
 
-echo "Configuring opencode"
-source ${DOTFILES_ROOT}/opencode/setup
+# Main function
+main() {
+    parse_args "$@"
 
-echo "Configuring os"
-source ${DOTFILES_ROOT}/os/setup
+    log_info "Install level: ${INSTALL_LEVEL:-none}"
+    log_info "Config only: ${CONFIG_ONLY}"
+    log_info "Force update: ${FORCE_UPDATE}"
 
-# install tools and configure them
-if [[ "$config_install_level" == "minimal" ]]; then
-    echo "Minimal install level selected"
-    echo "Installing minimal configuration"
-    source ${DOTFILES_ROOT}/minimal
-elif [[ "$config_install_level" == "standard" ]]; then
-    echo "Standard install level selected"
-    echo "Installing standard configuration"
-    source ${DOTFILES_ROOT}/standard
-else
-    echo "No level selected, just config dotfiles and nothing to install"
-fi
+    # Load saved install level if not provided via arguments
+    if [[ -z "${INSTALL_LEVEL}" ]]; then
+        local saved_level
+        saved_level=$(load_saved_install_level)
+        if [[ -n "${saved_level}" ]]; then
+            INSTALL_LEVEL="${saved_level}"
+            log_info "Using saved install level: ${INSTALL_LEVEL}"
+        fi
+    fi
 
-source ${HOME}/.bashrc
-echo "Installation completed"
-echo "Please restart your terminal to apply changes"
+    if [[ -n "${INSTALL_LEVEL}" ]]; then
+        echo "${INSTALL_LEVEL}" >"${HOME}/.dotfiles_install_level"
+    fi
+
+    setup_dotfiles_repo
+
+    export DOTFILES_ROOT="$(pwd)"
+    export NIXPKGS_ALLOW_UNFREE=1
+
+    if command -v sudo &>/dev/null; then
+        export SUDO="sudo"
+    else
+        log_warn "sudo not found, some operations may fail"
+        export SUDO=""
+    fi
+
+    local first_run=false
+    if is_first_run; then
+        first_run=true
+        log_info "First run detected - will perform full setup"
+    else
+        log_info "Subsequent run detected"
+    fi
+
+    configure_apt_sources
+    configure_timezone
+
+    run_all_setups
+
+    local should_install_tools=false
+
+    if [[ "${CONFIG_ONLY}" == true ]]; then
+        log_info "--config-only specified, skipping tool installation"
+        should_install_tools=false
+    elif [[ "${FORCE_UPDATE}" == true ]]; then
+        log_info "--update specified, forcing tool installation"
+        should_install_tools=true
+    elif [[ "${first_run}" == true ]]; then
+        log_info "First run, performing tool installation"
+        should_install_tools=true
+    else
+        log_info "Subsequent run without --update, skipping tool installation"
+        log_info "Use --update to force tool installation"
+        should_install_tools=false
+    fi
+
+    if [[ "${should_install_tools}" == true && -n "${INSTALL_LEVEL}" ]]; then
+        install_tools "${INSTALL_LEVEL}"
+    fi
+
+    # Mark as initialized after successful setup (even if tools were skipped)
+    mark_initialized
+
+    source "${HOME}/.bashrc" 2>/dev/null || true
+
+    log_info "Installation completed!"
+    log_info "Please restart your terminal to apply all changes."
+}
+
+main "$@"

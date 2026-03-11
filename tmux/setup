@@ -1,9 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+TMUX_REPO="https://github.com/gpakosz/.tmux.git"
 
 if [[ ! -d ${HOME}/.tmux ]]; then
-    cd ${HOME}
-    git clone https://github.com/gpakosz/.tmux.git ${HOME}/.tmux
-    ln -sf ${HOME}/.tmux/.tmux.conf ${HOME}/.tmux.conf
+    git clone "${TMUX_REPO}" "${HOME}/.tmux"
+    ln -sf "${HOME}/.tmux/.tmux.conf" "${HOME}/.tmux.conf"
 fi
 
-ln -sf ${DOTFILES_ROOT}/tmux/tmux.conf.local ${HOME}/.tmux.conf.local
+ln -sf "${DOTFILES_ROOT}/tmux/tmux.conf.local" "${HOME}/.tmux.conf.local"

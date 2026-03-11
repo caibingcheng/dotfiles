@@ -1,7 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-ln -sf ${DOTFILES_ROOT}/bash/bash_profile ${HOME}/.bash_profile
-ln -sf ${DOTFILES_ROOT}/bash/bashrc ${HOME}/.bashrc
-ln -sf ${DOTFILES_ROOT}/bash/profile ${HOME}/.profile
-ln -sf ${DOTFILES_ROOT}/bash/bash_aliases ${HOME}/.bash_aliases
-source ${HOME}/.bashrc
+set -euo pipefail
+
+ln -sf "${DOTFILES_ROOT}/bash/bash_profile" "${HOME}/.bash_profile"
+ln -sf "${DOTFILES_ROOT}/bash/bashrc" "${HOME}/.bashrc"
+ln -sf "${DOTFILES_ROOT}/bash/profile" "${HOME}/.profile"
+ln -sf "${DOTFILES_ROOT}/bash/bash_aliases" "${HOME}/.bash_aliases"
+# shellcheck source=/dev/null
+source "${HOME}/.bashrc"

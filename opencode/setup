@@ -1,10 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
 
 # Create opencode config directory
-mkdir -p ${HOME}/.config/opencode/
+mkdir -p "${HOME}/.config/opencode/"
 
 # Link configuration files
-ln -sf ${DOTFILES_ROOT}/opencode/oh-my-opencode.jsonc ${HOME}/.config/opencode/oh-my-opencode.jsonc
-ln -sf ${DOTFILES_ROOT}/opencode/opencode.json ${HOME}/.config/opencode/opencode.json
+ln -sf "${DOTFILES_ROOT}/opencode/oh-my-opencode.jsonc" "${HOME}/.config/opencode/oh-my-opencode.jsonc"
+ln -sf "${DOTFILES_ROOT}/opencode/opencode.json" "${HOME}/.config/opencode/opencode.json"
+
 # Link directories
 ln -sf ${DOTFILES_ROOT}/opencode/agents ${HOME}/.config/opencode/

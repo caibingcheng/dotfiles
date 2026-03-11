@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-if [[ ! -d "${HOME}/.config/clangd/" ]]; then
-    mkdir ${HOME}/.config/clangd/
-fi
-ln -sf ${DOTFILES_ROOT}/clang/clangd_config.yaml ${HOME}/.config/clangd/config.yaml
+set -euo pipefail
+
+mkdir -p "${HOME}/.config/clangd/"
+ln -sf "${DOTFILES_ROOT}/clang/clangd_config.yaml" "${HOME}/.config/clangd/config.yaml"

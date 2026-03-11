@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
 
 mkdir -p "${HOME}/.ssh"
 
-ln -sf ${DOTFILES_ROOT}/ssh/config ${HOME}/.ssh/config
+ln -sf "${DOTFILES_ROOT}/ssh/config" "${HOME}/.ssh/config"

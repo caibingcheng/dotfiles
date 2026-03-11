@@ -1,7 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck shell=bash
 
-# install and setup rust development environment
-if [[ "$(command -v rustup)" == "" ]]; then
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-  rustup component add rls rust-analysis rust-src
+set -euo pipefail
+
+# Install and setup rust development environment
+if ! command -v rustup &>/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    # shellcheck source=/dev/null
+    source "${HOME}/.cargo/env"
+    rustup component add rust-src
+    rustup component add rls rust-analysis || true
 fi
