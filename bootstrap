@@ -59,6 +59,17 @@ EXAMPLES:
 EOF
 }
 
+# Load saved install level from file if it exists
+load_saved_install_level() {
+    local saved_level
+    if [[ -f "${HOME}/.dotfiles_install_level" ]]; then
+        saved_level=$(cat "${HOME}/.dotfiles_install_level")
+        if [[ -n "${saved_level}" && " ${VALID_INSTALL_LEVELS[*]} " =~ " ${saved_level} " ]]; then
+            echo "${saved_level}"
+        fi
+    fi
+}
+
 # Parse command line arguments and set global variables
 parse_args() {
     CONFIG_ONLY=false
@@ -209,6 +220,16 @@ main() {
     log_info "Config only: ${CONFIG_ONLY}"
     log_info "Force update: ${FORCE_UPDATE}"
 
+    # Load saved install level if not provided via arguments
+    if [[ -z "${INSTALL_LEVEL}" ]]; then
+        local saved_level
+        saved_level=$(load_saved_install_level)
+        if [[ -n "${saved_level}" ]]; then
+            INSTALL_LEVEL="${saved_level}"
+            log_info "Using saved install level: ${INSTALL_LEVEL}"
+        fi
+    fi
+
     if [[ -n "${INSTALL_LEVEL}" ]]; then
         echo "${INSTALL_LEVEL}" >"${HOME}/.dotfiles_install_level"
     fi
@@ -257,8 +278,10 @@ main() {
 
     if [[ "${should_install_tools}" == true && -n "${INSTALL_LEVEL}" ]]; then
         install_tools "${INSTALL_LEVEL}"
-        mark_initialized
     fi
+
+    # Mark as initialized after successful setup (even if tools were skipped)
+    mark_initialized
 
     source "${HOME}/.bashrc" 2>/dev/null || true
 
