@@ -164,16 +164,24 @@ if [ -f ~/.docker_aliases ]; then
 fi
 
 # Starship prompt
-eval "$(starship init bash)"
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
 
 # Direnv hook
-eval "$(direnv hook bash)"
+if command -v direnv >/dev/null 2>&1; then
+    eval "$(direnv hook bash)"
+fi
 
 # FZF PATH
-export PATH="${HOME}/.fzf/bin:${PATH}"
+if [ -f "${HOME}/.fzf/bin/fzf" ]; then
+    export PATH="${HOME}/.fzf/bin:${PATH}"
+fi
 
 # FZF bash integration
-eval "$(fzf --bash)"
+if command -v fzf >/dev/null 2>&1; then
+    eval "$(fzf --bash)"
+fi
 
 # FZF default options
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline"
