@@ -278,7 +278,7 @@ See `.github/workflows/ci.yml`
 ## Notes
 
 - Configurations are symlinked from `~/.dotfiles/` to `~/`
-- Backups are created when replacing existing files (`.backup.YYYYMMDD_HHMMSS`)
+- Backups are created when replacing existing files (`.backup.YYYYMMDDHHMMSS`)
 - Homebrew is installed to `/home/linuxbrew/.linuxbrew`
 - Most tools support both Ubuntu APT and Homebrew
 
