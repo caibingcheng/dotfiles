@@ -22,6 +22,10 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           export DOTFILES_TEST_MODE=1
           
+          # Link current directory to ~/.dotfiles to avoid re-cloning
+          mkdir -p "$HOME"
+          ln -sf "$PWD" "$HOME/.dotfiles"
+          
           # Test the bootstrap script with --config-only
           chmod +x bootstrap
           ./bootstrap --config-only
@@ -49,9 +53,12 @@ jobs:
             fi
           done
           
-          # Check all executable files with bash syntax
+          # Check bin scripts - only check files with bash/sh shebang
           find bin -type f -executable | while read script; do
-            bash -n "$script" || exit 1
+            # Only check bash/sh scripts, skip python/expect/others
+            if head -1 "$script" | grep -qE "bash|sh$"; then
+              bash -n "$script" || exit 1
+            fi
           done
 
       - name: Test bootstrap help
