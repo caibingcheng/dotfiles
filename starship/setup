@@ -35,14 +35,54 @@ if ! command_exists starship; then
         fi
     fi
     
-    # Priority 3: Official install script
-    if [[ "$STARSHIP_INSTALLED" != true ]]; then
-        log_info "Installing starship via official script..."
-        if curl -sS https://starship.rs/install.sh | sh -s -- --yes 2>/dev/null; then
+    # Priority 2: apt (for Ubuntu/Debian)
+    if [[ "$STARSHIP_INSTALLED" != true ]] && command_exists apt-get; then
+        log_info "Installing starship via apt..."
+        if sudo apt-get update && sudo apt-get install -y starship 2>/dev/null; then
             STARSHIP_INSTALLED=true
-            log_info "Starship installed via official script"
+            log_info "Starship installed via apt"
         else
-            log_warn "Failed to install starship"
+            log_warn "Failed to install starship via apt"
+        fi
+    fi
+    
+    # Priority 3: Direct download from GitHub releases (without curl | sh)
+    if [[ "$STARSHIP_INSTALLED" != true ]]; then
+        log_info "Installing starship from GitHub releases..."
+        
+        # Get latest release version
+        STARSHIP_VERSION="1.21.1"  # Pin to specific version
+        
+        # Determine architecture
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)  STARSHIP_ARCH="x86_64-unknown-linux-gnu" ;;
+            aarch64) STARSHIP_ARCH="aarch64-unknown-linux-gnu" ;;
+            armv7l)  STARSHIP_ARCH="armv7-unknown-linux-gnueabihf" ;;
+            *)       log_warn "Unsupported architecture: $ARCH"; STARSHIP_ARCH="" ;;
+        esac
+        
+        if [[ -n "$STARSHIP_ARCH" ]]; then
+            TEMP_DIR=$(mktemp -d)
+            DOWNLOAD_URL="https://github.com/starship/starship/releases/download/v${STARSHIP_VERSION}/starship-${STARSHIP_ARCH}.tar.gz"
+            
+            if curl -fsSL "$DOWNLOAD_URL" -o "${TEMP_DIR}/starship.tar.gz" 2>/dev/null; then
+                if tar -xzf "${TEMP_DIR}/starship.tar.gz" -C "$TEMP_DIR" 2>/dev/null; then
+                    if mv "${TEMP_DIR}/starship" "${HOME}/.local/bin/starship" 2>/dev/null || \
+                       sudo mv "${TEMP_DIR}/starship" "/usr/local/bin/starship" 2>/dev/null; then
+                        STARSHIP_INSTALLED=true
+                        log_info "Starship installed from GitHub releases (v${STARSHIP_VERSION})"
+                    else
+                        log_warn "Failed to move starship binary to PATH"
+                    fi
+                else
+                    log_warn "Failed to extract starship archive"
+                fi
+            else
+                log_warn "Failed to download starship from GitHub releases"
+            fi
+            
+            rm -rf "$TEMP_DIR"
         fi
     fi
 else

@@ -24,17 +24,20 @@ if ! command_exists fzf; then
         fi
     fi
     
-    # Priority 2: Git clone and install from source
+    # Priority 2: Git clone and install from source (pinned to specific version)
     if [[ "$FZF_INSTALLED" != true ]]; then
         log_info "Installing fzf from source..."
         
-        # Clone fzf repository
+        # Pin to specific version for security
+        FZF_VERSION="0.56.0"
+        
+        # Clone fzf repository with specific tag
         if [[ ! -d "${HOME}/.fzf" ]]; then
-            if git clone --depth 1 https://github.com/junegunn/fzf.git "${HOME}/.fzf" 2>/dev/null; then
+            if git clone --depth 1 --branch "v${FZF_VERSION}" https://github.com/junegunn/fzf.git "${HOME}/.fzf" 2>/dev/null; then
                 # Install fzf
                 if "${HOME}/.fzf/install" --all --no-bash --no-zsh --no-fish --no-update-rc 2>/dev/null; then
                     FZF_INSTALLED=true
-                    log_info "FZF installed from source"
+                    log_info "FZF installed from source (v${FZF_VERSION})"
                 else
                     log_warn "Failed to install fzf binaries from source, cleaning up..."
                     rm -rf "${HOME}/.fzf"
