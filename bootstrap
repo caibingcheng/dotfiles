@@ -151,7 +151,7 @@ configure_apt_sources() {
 configure_timezone() {
     log_info "Configuring timezone..."
     if [[ ! -f /etc/timezone ]]; then
-        echo -e "Asia\nShanghai" | ${SUDO} apt-get install -y tzdata
+        ${SUDO} DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
     fi
     ${SUDO} timedatectl set-timezone Asia/Shanghai 2>/dev/null || true
 }
