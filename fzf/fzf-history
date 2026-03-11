@@ -69,33 +69,37 @@ if ! command -v fzf &>/dev/null; then
     exit 1
 fi
 
+# Create a unique temporary directory for this run
+tmp_dir="$(mktemp -d -t fzf-history.XXXXXXXXXX)"
+trap 'rm -rf "$tmp_dir"' EXIT
+
 # Select from history
 selected=$(echo "$history_data" | fzf --tac \
     --prompt="History > " \
     --header="Enter: Execute | Ctrl-E: Edit | Ctrl-C: Copy | Ctrl-D: Delete" \
-    --bind "ctrl-e:execute-silent(echo -n {} > /tmp/fzf_history_selection)+abort" \
-    --bind "ctrl-c:execute-silent(echo -n {} | xclip -selection clipboard 2>/dev/null || echo -n {} | pbcopy 2>/dev/null || echo -n {} > /tmp/fzf_history_clipboard)+abort" \
-    --bind "ctrl-d:execute-silent(echo -n {} > /tmp/fzf_history_delete)+abort" \
+    --bind "ctrl-e:execute-silent(echo -n {} > \"$tmp_dir/fzf_history_selection\")+abort" \
+    --bind "ctrl-c:execute-silent(echo -n {} | xclip -selection clipboard 2>/dev/null || echo -n {} | pbcopy 2>/dev/null || echo -n {} > \"$tmp_dir/fzf_history_clipboard\")+abort" \
+    --bind "ctrl-d:execute-silent(echo -n {} > \"$tmp_dir/fzf_history_delete\")+abort" \
     --bind "ctrl-y:accept")
 
 # Handle deletion
-if [[ -f /tmp/fzf_history_delete ]]; then
-    cmd_to_delete=$(cat /tmp/fzf_history_delete)
-    rm -f /tmp/fzf_history_delete
+if [[ -f "$tmp_dir/fzf_history_delete" ]]; then
+    cmd_to_delete=$(cat "$tmp_dir/fzf_history_delete")
+    rm -f "$tmp_dir/fzf_history_delete"
     
     if [[ -f "$history_file" ]]; then
         # Remove from history file
-        grep -vFx "$cmd_to_delete" "$history_file" > /tmp/history_temp
-        mv /tmp/history_temp "$history_file"
+        grep -vFx "$cmd_to_delete" "$history_file" > "$tmp_dir/history_temp"
+        mv "$tmp_dir/history_temp" "$history_file"
         echo "Deleted from history: $cmd_to_delete"
     fi
     exit 0
 fi
 
 # Handle copy
-if [[ -f /tmp/fzf_history_clipboard ]]; then
-    cmd_copied=$(cat /tmp/fzf_history_clipboard)
-    rm -f /tmp/fzf_history_clipboard
+if [[ -f "$tmp_dir/fzf_history_clipboard" ]]; then
+    cmd_copied=$(cat "$tmp_dir/fzf_history_clipboard")
+    rm -f "$tmp_dir/fzf_history_clipboard"
     echo "Copied to clipboard: $cmd_copied"
     exit 0
 fi
