@@ -3,14 +3,16 @@
 
 # 全局配置
 add_newline = false
-format = """$cmd_duration$line_break$custom$directory$git_branch$git_commit$git_status$line_break$character"""
+format = """$cmd_duration$status$line_break$custom$directory$python$git_branch$git_commit$git_status$line_break$character"""
+command_timeout = 5000  # 命令超时时间，单位为毫秒
 
 [line_break]
 disabled = false
 
 # 系统运行时间
 [custom.uptime]
-command = "uptime -p | sed 's/up //; s/ days\\?/d/g; s/ hours\\?/h/g; s/ minutes\\?/m/g; s/,//g; s/ //g'"
+# command = "uptime -p | sed 's/up //; s/ days\\?/d/g; s/ hours\\?/h/g; s/ minutes\\?/m/g; s/,//g; s/ //g'"
+command = "only_uptime"
 when = true
 format = "[$output]($style) "
 style = "dimmed white"
@@ -56,6 +58,14 @@ min_time = 2000  # 只显示超过 2 秒的命令
 format = "[Took $duration]($style) "
 style = "yellow"
 
+[python]
+format = '[(${version} )(\($virtualenv\) )]($style)'
+
+[status]
+format = '[$common_meaning$signal_name$maybe_int]($style) '
+map_symbol = true
+disabled = false
+
 # 禁用其他模块
 [time]
 disabled = true
@@ -64,9 +74,6 @@ disabled = true
 disabled = true
 
 [hostname]
-disabled = true
-
-[python]
 disabled = true
 
 [nodejs]

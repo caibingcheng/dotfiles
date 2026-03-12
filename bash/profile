@@ -102,21 +102,28 @@ function only_uptime() {
     if [ $hours -gt 24 ]; then
         days=$(($hours / 24))
         hours=$(($hours % 24))
-        # > 2d, use ligter color
-        # > 5d, use even lighter color
-        # > 10d, use even lighter color
-        if [ $days -gt 10 ]; then
-            echo -e "\e[93;1m[${days}d${hours}h]\e[0m"
-        elif [ $days -gt 5 ]; then
-            echo -e "\e[93;2m[${days}d${hours}h]\e[0m"
-        elif [ $days -gt 2 ]; then
-            echo -e "\e[32;2m[${days}d${hours}h]\e[0m"
-        else
-          echo -e "\e[2m[${days}d${hours}h]\e[0m"
-        fi
+        echo "${days}d${hours}h"
     else
-        echo -e "\e[2m[${hours}:${minutes}]\e[0m"
+        echo "${hours}h${minutes}m"
     fi
+    # if [ $hours -gt 24 ]; then
+    #     days=$(($hours / 24))
+    #     hours=$(($hours % 24))
+    #     # > 2d, use ligter color
+    #     # > 5d, use even lighter color
+    #     # > 10d, use even lighter color
+    #     if [ $days -gt 10 ]; then
+    #         echo -e "\e[93;1m[${days}d${hours}h]\e[0m"
+    #     elif [ $days -gt 5 ]; then
+    #         echo -e "\e[93;2m[${days}d${hours}h]\e[0m"
+    #     elif [ $days -gt 2 ]; then
+    #         echo -e "\e[32;2m[${days}d${hours}h]\e[0m"
+    #     else
+    #       echo -e "\e[2m[${days}d${hours}h]\e[0m"
+    #     fi
+    # else
+    #     echo -e "\e[2m[${hours}:${minutes}]\e[0m"
+    # fi
 }
 
 # integration zoxide with fzf

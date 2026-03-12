@@ -121,10 +121,7 @@ uninstall_dotfiles() {
     
     # Tealdeer
     remove_link "${HOME}/.config/tealdeer/config.toml"
-    
-    # Aider
-    remove_link "${HOME}/.config/aider/aider.conf.yml"
-    
+
     # Remove bin directory from PATH if managed by dotfiles
     # (We don't remove the bin directory itself, just unlink if it's a symlink)
     if [[ -L "${HOME}/bin" && "$(readlink "${HOME}/bin")" == "${DOTFILES_ROOT}/bin" ]]; then
