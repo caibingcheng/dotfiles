@@ -30,20 +30,20 @@ symbol = ""
 format = "[$branch]($style) "
 style = "purple"
 
-# Git 状态配置 - 更丰富的信息
+# Git 状态配置 - git status --short 格式
 [git_status]
 format = '([$all_status$ahead_behind]($style) )'
 ahead = "↑${count}"
 behind = "↓${count}"
 diverged = "↕↑${ahead_count}↓${behind_count}"
 up_to_date = "✓"
-untracked = "?"
-stashed = "📦"
-modified = "✚"
-staged = "●"
-renamed = "»"
-deleted = "✖"
-conflicted = "⚠"
+untracked = "??=${count}"
+stashed = "S=${count}"
+modified = "M=${count}"
+staged = "A=${count}"
+renamed = "R=${count}"
+deleted = "D=${count}"
+conflicted = "U=${count}"
 style = "yellow"
 
 # 命令执行时间
