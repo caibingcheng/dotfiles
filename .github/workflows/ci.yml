@@ -21,15 +21,15 @@ jobs:
           export CI=true
           export DEBIAN_FRONTEND=noninteractive
           export DOTFILES_TEST_MODE=1
-          
+
           # Link current directory to ~/.dotfiles to avoid re-cloning
           mkdir -p "$HOME"
           ln -sf "$PWD" "$HOME/.dotfiles"
-          
+
           # Test the bootstrap script with --config-only
           chmod +x bootstrap
           ./bootstrap --config-only
-          
+
       - name: Verify dotfiles structure
         run: |
           # Check that expected directories exist
@@ -40,9 +40,8 @@ jobs:
           test -d starship
           test -d direnv
           test -d fzf
-          test -d aider
           test -d docker
-          
+
       - name: Test shell scripts syntax
         run: |
           # Check bash scripts for syntax errors
@@ -52,7 +51,7 @@ jobs:
               bash -n "$script" || exit 1
             fi
           done
-          
+
           # Check bin scripts - only check files with bash/sh shebang
           find bin -type f -executable | while read script; do
             # Only check bash/sh scripts, skip python/expect/others
@@ -83,7 +82,7 @@ jobs:
               shellcheck -e SC1090,SC1091 "$script" || true
             fi
           done
-          
+
           # Check specific scripts
           shellcheck -e SC1090,SC1091 bootstrap || true
           shellcheck -e SC1090,SC1091 minimal || true
