@@ -213,7 +213,6 @@ run_all_setups() {
     run_module_setup "starship"
     run_module_setup "direnv"
     run_module_setup "fzf"
-    run_module_setup "aider"
     run_module_setup "os"
 }
 

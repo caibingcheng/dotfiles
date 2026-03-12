@@ -180,7 +180,22 @@ fi
 
 # FZF bash integration
 if command -v fzf >/dev/null 2>&1; then
-    eval "$(fzf --bash)"
+    # fzf 0.48.0+ supports --bash/--zsh/--fish options
+    # older versions need manual sourcing
+    if fzf --bash 2>/dev/null | head -1 | grep -q "source"; then
+        eval "$(fzf --bash)"
+    else
+        # Legacy fzf (< 0.48.0): source key bindings and completion manually
+        if [[ -f ~/.fzf.bash ]]; then
+            source ~/.fzf.bash
+        elif [[ -f /usr/share/doc/fzf/examples/key-bindings.bash ]]; then
+            source /usr/share/doc/fzf/examples/key-bindings.bash
+            source /usr/share/doc/fzf/examples/completion.bash
+        elif [[ -f /usr/share/fzf/key-bindings.bash ]]; then
+            source /usr/share/fzf/key-bindings.bash
+            source /usr/share/fzf/completion.bash
+        fi
+    fi
 fi
 
 # FZF default options

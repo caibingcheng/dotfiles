@@ -35,7 +35,6 @@ curl -fsSL https://raw.githubusercontent.com/caibingcheng/dotfiles/main/bootstra
 | **starship/** | Cross-shell prompt (modern alternative to custom PS1) |
 | **direnv/** | Directory-specific environment variables |
 | **fzf/** | Interactive fuzzy finder scripts |
-| **aider/** | AI coding assistant configuration |
 | **docker/** | Docker aliases and helper functions |
 | **brew/** | Homebrew package definitions |
 | **rust/** | Rust toolchain installation |
@@ -80,7 +79,6 @@ Full development environment (includes minimal):
 ├── direnv/            # Direnv configuration
 ├── docker/            # Docker aliases
 ├── fzf/               # Fzf utility scripts
-├── aider/             # Aider AI assistant config
 ├── lib/               # Shared library functions
 ├── bootstrap          # Main installation script
 ├── minimal            # Minimal installation
@@ -254,7 +252,6 @@ fzf-apt install      # Interactive apt install
 
 ### Development Tools
 
-- **Aider**: AI coding assistant (config in `aider/`)
 - **Opencode**: AI agent configuration
 - **Tmux**: Oh-my-tmux with plugins (resurrect, continuum, cpu)
 - **Tealdeer**: Fast tldr pages client
