@@ -64,13 +64,9 @@ alias gg="gitui"
 alias pp="tgpt"
 alias ss="sgpt"
 
-# FZF integration (version-aware)
+# FZF integration (fzf 0.48.0+ supports --bash option)
 if command -v fzf &>/dev/null; then
-    if fzf --bash 2>/dev/null | head -1 | grep -q "source"; then
-        eval "$(fzf --bash)"
-    elif [[ -f ~/.fzf.bash ]]; then
-        source ~/.fzf.bash
-    fi
+    eval "$(fzf --bash)"
 fi
 if command -v zoxide &>/dev/null; then
     eval "$(zoxide init bash)"
