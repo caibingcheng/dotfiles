@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# OpenCode tmux 会话启动脚本
+# 为每个终端窗口生成唯一的 session 名称
+SESSION_BASE="opencode"
+SESSION_NAME="${SESSION_BASE}-$(date +%s)-$$"
+
+# 检查 tmux 是否已安装
+if ! command -v tmux &> /dev/null; then
+    echo "错误: tmux 未安装。请先安装 tmux。"
+    exit 1
+fi
+
+# 创建新的 tmux 会话（分离模式）
+tmux new-session -d -s "$SESSION_NAME"
+
+# 重命名第一个窗口
+tmux rename-window -t "$SESSION_NAME:1" "OpenCode"
+
+# 在左侧窗格启动 opencode
+if [ "$1" == "c" ]; then
+    tmux send-keys -t "$SESSION_NAME:1.1" "occ" C-m
+elif [ "$1" == "m" ]; then
+    tmux send-keys -t "$SESSION_NAME:1.1" "ocm" C-m
+else
+    echo "No valid argument provided. Use 'c' for occ or 'm' for ocm."
+    exit 1
+fi
+
+# 垂直分割窗口（左右分屏）
+# -h 表示水平分割（创建左右布局）
+# -p 50 表示右侧窗格占 50% 宽度
+tmux split-window -h -t "$SESSION_NAME:1" -p 50
+
+# 在右侧窗格启动交互式 bash（加载 ~/.bashrc）
+# tmux send-keys -t "$SESSION_NAME:1.2" "bash" C-m
+
+# 右侧窗格保持为普通终端，不发送任何命令
+
+# 选择左侧窗格（opencode）作为默认焦点
+tmux select-pane -t "$SESSION_NAME:1.1"
+
+# 连接到会话
+tmux attach-session -t "$SESSION_NAME"

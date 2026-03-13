@@ -1,0 +1,38 @@
+#!/bin/bash
+# Git aliases and functions
+
+# Basic git aliases
+alias gb="git branch --sort=-committerdate"
+alias gba="git branch -a --sort=-committerdate"
+alias gss="git status --short"
+alias gssu="gss --untracked-files=no"
+alias gll="git log"
+alias gaa="git add ."
+alias gmm="git commit"
+alias gma="git commit -a"
+alias gmd="git commit --amend"
+alias gdd="git diff"
+alias gdt="git difftool"
+alias gpl="git pull"
+alias gsu="git submodule update --init"
+alias gcf="git clean -fd"
+
+# Git worktree aliases
+alias gww="git worktree"
+alias gwl="git worktree list"
+alias gwa="git worktree add"
+alias gwr="git worktree remove"
+alias gwm="git worktree move"
+alias gwp="git worktree prune"
+
+# Git multi aliases (requires git-multi tool)
+alias gits="git multi"
+alias gsb="gits branch"
+alias gsba="gits branch -a"
+alias gsss="gits status"
+alias gsssu="gsss --untracked-files=no"
+alias gsll="gits log"
+alias gsdd="gits diff"
+
+# Alternative git UI tools
+alias gg="gitui"

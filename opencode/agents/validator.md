@@ -1,6 +1,7 @@
 ---
 description: 回答验证专家 - 验证 ask agent 回答的正确性、合理性和完整性，需要 @validator 提及使用
 mode: subagent
+model: bailian-coding-plan/glm-5
 tools:
   read: true
   write: false
@@ -79,7 +80,7 @@ verification_request:
 verification_result:
   overall_status: "PASSED | NEEDS_IMPROVEMENT | FAILED"
   confidence_score: 0-100  # 综合置信度评分
-  
+
   dimensions:
     correctness:
       score: 0-100
@@ -87,28 +88,28 @@ verification_result:
       verified_facts:
         - "已验证的事实1"
         - "已验证的事实2"
-    
+
     completeness:
       score: 0-100
       missing_aspects: ["遗漏的方面1"]
       suggestions: ["补充建议"]
-    
+
     reasonableness:
       score: 0-100
       concerns: ["潜在风险或问题"]
       alternatives: ["替代方案建议"]
-  
+
   specific_findings:
     - type: "ERROR | WARNING | INFO"
       location: "回答中的位置或引用"
       description: "具体问题描述"
       suggestion: "改进建议"
       severity: "HIGH | MEDIUM | LOW"
-  
+
   improvement_suggestions:
     - "具体的改进建议1"
     - "具体的改进建议2"
-  
+
   final_recommendation: |
     对 ask agent 的最终建议：
     - 是否需要修改回答
@@ -205,7 +206,7 @@ verification_result:
 
 ## 示例
 
-**输入**: 
+**输入**:
 - 用户问题: "如何在 Python 中读取文件？"
 - ask 回答: "使用 open() 函数，例如 `open('file.txt', 'r')`"
 
@@ -214,35 +215,35 @@ verification_result:
 verification_result:
   overall_status: "NEEDS_IMPROVEMENT"
   confidence_score: 60
-  
+
   dimensions:
     correctness:
       score: 80
       issues: ["缺少 with 语句，可能导致资源泄漏"]
       verified_facts: ["open() 函数语法正确"]
-    
+
     completeness:
       score: 40
       missing_aspects: ["未提及文件不存在处理", "未提及编码问题", "未提及最佳实践 with 语句"]
       suggestions: ["补充异常处理示例", "添加编码参数说明", "推荐使用 with 语句"]
-    
+
     reasonableness:
       score: 70
       concerns: ["示例代码可能导致文件未关闭"]
       alternatives: ["建议使用 with open(...) as f:"]
-  
+
   specific_findings:
     - type: "WARNING"
       location: "代码示例"
       description: "未使用 with 语句，文件句柄可能未关闭"
       suggestion: "修改为 with open('file.txt', 'r') as f:"
       severity: "MEDIUM"
-  
+
   improvement_suggestions:
     - "添加完整的文件读取示例，包括 with 语句"
     - "补充异常处理说明"
     - "提及编码参数的重要性"
-  
+
   final_recommendation: |
     建议修改回答，补充以下内容：
     1. 使用 with 语句的正确示例

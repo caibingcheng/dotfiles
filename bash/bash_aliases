@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Source git aliases
+if [ -f ~/.git_aliases ]; then
+    . ~/.git_aliases
+fi
+
 alias sba=". ~/.bashrc"
 alias ssba=". ~/.bash_profile"
 alias crc="command -v code &>/dev/null && code ~/.dotfiles || vim ~/.dotfiles"
@@ -7,38 +12,20 @@ alias dotfiles="${HOME}/.dotfiles/bootstrap"
 
 alias oc="opencode"
 
+# Opencode with different agent configurations
+occ() {
+    ln -sf "${HOME}/.dotfiles/opencode/oh-my-opencode-copilot.jsonc" "${HOME}/.config/opencode/oh-my-opencode.jsonc"
+    opencode
+}
+
+ocm() {
+    ln -sf "${HOME}/.dotfiles/opencode/oh-my-opencode-mix.jsonc" "${HOME}/.config/opencode/oh-my-opencode.jsonc"
+    opencode
+}
+
 alias ssh="/bin/ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=10"
 alias ntpon="timedatectl set-ntp yes"
 alias ntpoff="timedatectl set-ntp no"
-
-alias gb="git branch --sort=-committerdate"
-alias gba="git branch -a --sort=-committerdate"
-alias gss="git status --short"
-alias gssu="gss --untracked-files=no"
-alias gll="git log"
-alias gaa="git add ."
-alias gmm="git commit"
-alias gma="git commit -a"
-alias gmd="git commit --amend"
-alias gdd="git diff"
-alias gdt="git difftool"
-alias gpl="git pull"
-alias gsu="git submodule update --init"
-alias gcf="git clean -fd"
-alias gww="git worktree"
-alias gwl="git worktree list"
-alias gwa="git worktree add"
-alias gwr="git worktree remove"
-alias gwm="git worktree move"
-alias gwp="git worktree prune"
-
-alias gits="git multi"
-alias gsb="gits branch"
-alias gsba="gits branch -a"
-alias gsss="gits status"
-alias gsssu="gsss --untracked-files=no"
-alias gsll="gits log"
-alias gsdd="gits diff"
 
 command -v exa &>/dev/null && alias ls="exa"
 command -v fd &>/dev/null && alias fd="fd --hidden --no-ignore "
@@ -60,7 +47,6 @@ alias rr="ranger"
 # ff alias for thefuck
 # ll alias for ls -lh
 # mm alias for make
-alias gg="gitui"
 alias pp="tgpt"
 alias ss="sgpt"
 

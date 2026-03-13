@@ -187,3 +187,8 @@ fi
 
 # FZF default options
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline"
+
+# Git aliases
+if [ -f ~/.git_aliases ]; then
+    . ~/.git_aliases
+fi

@@ -35,4 +35,17 @@ if command -v git &>/dev/null; then
     ln -sf "${DOTFILES_ROOT}/git/git-completion.bash" "${HOME}/.git-completion.bash"
     ln -sf "${DOTFILES_ROOT}/git/gitconfig" "${HOME}/.gitconfig"
     ln -sf "${DOTFILES_ROOT}/git/gitignore_global" "${HOME}/.gitignore_global"
+    ln -sf "${DOTFILES_ROOT}/git/git_aliases" "${HOME}/.git_aliases"
+fi
+
+# Source git aliases in bashrc if not already present
+if ! grep -q "git_aliases" "${HOME}/.bashrc" 2>/dev/null; then
+    # shellcheck source=/dev/null
+    source "${DOTFILES_ROOT}/lib/common.sh" 2>/dev/null || true
+    log_info "Adding git aliases to .bashrc..."
+    echo '' >> "${HOME}/.bashrc"
+    echo '# Git aliases' >> "${HOME}/.bashrc"
+    echo 'if [ -f ~/.git_aliases ]; then' >> "${HOME}/.bashrc"
+    echo '    . ~/.git_aliases' >> "${HOME}/.bashrc"
+    echo 'fi' >> "${HOME}/.bashrc"
 fi

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": {
+      "model": "bailian-coding-plan/kimi-k2.5",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "oracle": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "librarian": {
+      "model": "github-copilot/gpt-5-mini",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "explore": {
+      "model": "github-copilot/gpt-5-mini",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "multimodal-looker": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "prometheus": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "metis": {
+      "model": "bailian-coding-plan/glm-5",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "momus": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "atlas": {
+      "model": "bailian-coding-plan/kimi-k2.5",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    }
+  },
+  "categories": {
+    "sisyphus-junior": {
+      "model": "github-copilot/claude-sonnet-4.6",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "visual-engineering": {
+      "model": "bailian-coding-plan/glm-5",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "ultrabrain": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "deep": {
+      "model": "github-copilot/gpt-5.3-codex",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "artistry": {
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "quick": {
+      "model": "github-copilot/claude-haiku-4.5",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "unspecified-low": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "unspecified-high": {
+      "model": "github-copilot/gpt-5.4",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    },
+    "writing": {
+      "model": "github-copilot/gemini-3-flash-preview",
+      "prompt_append": "Response in Chinese, unless otherwise specified."
+    }
+  }
+}
