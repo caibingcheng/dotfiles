@@ -1,44 +1,130 @@
 #!/bin/bash
 
-# OpenCode tmux 会话启动脚本
-# 为每个终端窗口生成唯一的 session 名称
-SESSION_BASE="opencode"
-SESSION_NAME="${SESSION_BASE}-$(date +%s)-$$"
+# OpenCode tmux session launcher
+# Creates split-screen layout: opencode (left) + terminal (right)
 
-# 检查 tmux 是否已安装
-if ! command -v tmux &> /dev/null; then
-    echo "错误: tmux 未安装。请先安装 tmux。"
-    exit 1
+# Early help check
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: oo [model]"
+    echo ""
+    echo "Models:"
+    echo "  (none)    Default model (oc)"
+    echo "  c, claude Claude model (occ)"
+    echo "  m, mini   Mini model (ocm)"
+    echo ""
+    echo "Environment variables:"
+    echo "  OO_SESSION_PREFIX  Session name prefix (default: opencode)"
+    echo "  OO_SPLIT_RATIO     Right pane width percentage (default: 50)"
+    exit 0
 fi
 
-# 创建新的 tmux 会话（分离模式）
-tmux new-session -d -s "$SESSION_NAME"
+set -e
 
-# 重命名第一个窗口
-tmux rename-window -t "$SESSION_NAME:1" "OpenCode"
+# Configuration (override via environment variables)
+SESSION_PREFIX="${OO_SESSION_PREFIX:-opencode}"
+SPLIT_RATIO="${OO_SPLIT_RATIO:-50}"
 
-# 在左侧窗格启动 opencode
-if [ "$1" == "c" ]; then
-    tmux send-keys -t "$SESSION_NAME:1.1" "occ" C-m
-elif [ "$1" == "m" ]; then
-    tmux send-keys -t "$SESSION_NAME:1.1" "ocm" C-m
-else
-    echo "No valid argument provided. Use 'c' for occ or 'm' for ocm."
-    exit 1
-fi
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-# 垂直分割窗口（左右分屏）
-# -h 表示水平分割（创建左右布局）
-# -p 50 表示右侧窗格占 50% 宽度
-tmux split-window -h -t "$SESSION_NAME:1" -p 50
+error() { echo -e "${RED}Error:${NC} $1" >&2; exit 1; }
+info() { echo -e "${GREEN}$1${NC}"; }
+warn() { echo -e "${YELLOW}Warning:${NC} $1"; }
 
-# 在右侧窗格启动交互式 bash（加载 ~/.bashrc）
-# tmux send-keys -t "$SESSION_NAME:1.2" "bash" C-m
+# Check dependencies
+command -v tmux &> /dev/null || error "tmux not installed. Install with: sudo apt install tmux"
 
-# 右侧窗格保持为普通终端，不发送任何命令
+parse_args() {
+    local model="default"
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            c|claude)
+                model="claude"
+                shift
+                ;;
+            m|mini)
+                model="mini"
+                shift
+                ;;
+            *)
+                warn "Unknown argument: $1"
+                shift
+                ;;
+        esac
+    done
+    
+    echo "$model"
+}
 
-# 选择左侧窗格（opencode）作为默认焦点
-tmux select-pane -t "$SESSION_NAME:1.1"
+get_opencode_cmd() {
+    local model="$1"
+    case "$model" in
+        claude) echo "occ" ;;
+        mini)   echo "ocm" ;;
+        *)      echo "oc" ;;
+    esac
+}
 
-# 连接到会话
-tmux attach-session -t "$SESSION_NAME"
+# Find next available session number
+find_next_session_num() {
+    local num=1
+    while tmux has-session -t "${SESSION_PREFIX}${num}" 2>/dev/null; do
+        ((num++))
+    done
+    echo "$num"
+}
+
+# Check if already in a tmux session
+in_tmux() {
+    [[ -n "$TMUX" ]]
+}
+
+main() {
+    local model
+    model=$(parse_args "$@")
+    
+    local opencode_cmd
+    opencode_cmd=$(get_opencode_cmd "$model")
+    
+    # Find next available session number
+    local session_num
+    session_num=$(find_next_session_num)
+    local session_name="${SESSION_PREFIX}${session_num}"
+    
+    # Create new tmux session
+    local term_width
+    term_width=$(tput cols 2>/dev/null || echo 160)
+    local split_width=$((term_width / 2))
+    
+    if in_tmux; then
+        # Already in tmux - create new session and switch
+        tmux new-session -d -s "$session_name"
+        tmux split-window -h -t "$session_name:1" -l "$split_width"
+    else
+        # Not in tmux - create session
+        tmux new-session -d -s "$session_name"
+        tmux split-window -h -t "$session_name:1" -l "$split_width"
+    fi
+    
+    # Rename window
+    tmux rename-window -t "$session_name:1" "OpenCode"
+    
+    # Start opencode in left pane
+    tmux send-keys -t "$session_name:1.1" "$opencode_cmd" C-m
+    
+    # Focus left pane (opencode)
+    tmux select-pane -t "$session_name:1.1"
+    
+    # Attach to session
+    if in_tmux; then
+        tmux switch-client -t "$session_name"
+    else
+        tmux attach-session -t "$session_name"
+    fi
+}
+
+main "$@"
