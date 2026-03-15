@@ -1,7 +1,7 @@
 ---
 description: 翻译专家 - 专注于多语言精准翻译，支持多种语言互译，需要 @ 提及使用
 mode: subagent
-model: bailian-coding-plan/kimi-k2.5
+model: bailian-coding-plan/glm-5
 tools:
   read: false
   write: false

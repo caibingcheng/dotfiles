@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "plan",
   "agent": {
     "plan": {
       "model": "bailian-coding-plan/glm-5"
@@ -11,7 +10,8 @@
   },
   "plugin": [
     "opencode-antigravity-auth@latest",
-    "@tarquinen/opencode-dcp@latest"
+    "@tarquinen/opencode-dcp@latest",
+    "oh-my-opencode"
   ],
   "provider": {
     "bailian-coding-plan": {
