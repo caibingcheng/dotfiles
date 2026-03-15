@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "bailian-coding-plan/glm-5"
+      "model": "alibaba-coding-plan-cn/glm-5"
     },
     "oracle": {
       "model": "github-copilot/gpt-5.4"
@@ -20,13 +20,13 @@
       "model": "github-copilot/gpt-5.4"
     },
     "metis": {
-      "model": "bailian-coding-plan/glm-5"
+      "model": "alibaba-coding-plan-cn/glm-5"
     },
     "momus": {
       "model": "github-copilot/gpt-5.4"
     },
     "atlas": {
-      "model": "bailian-coding-plan/glm-5"
+      "model": "alibaba-coding-plan-cn/glm-5"
     }
   },
   "categories": {
@@ -34,7 +34,7 @@
       "model": "github-copilot/claude-sonnet-4.6"
     },
     "visual-engineering": {
-      "model": "bailian-coding-plan/glm-5"
+      "model": "alibaba-coding-plan-cn/glm-5"
     },
     "ultrabrain": {
       "model": "github-copilot/gpt-5.4"
