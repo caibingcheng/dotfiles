@@ -11,6 +11,6 @@
   "plugin": [
     "opencode-antigravity-auth@latest",
     "@tarquinen/opencode-dcp@latest",
-    "oh-my-opencode"
+    "superpowers@git+https://github.com/obra/superpowers.git"
   ]
 }
