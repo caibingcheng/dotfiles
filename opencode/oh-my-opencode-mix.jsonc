@@ -30,9 +30,6 @@
     }
   },
   "categories": {
-    "sisyphus-junior": {
-      "model": "github-copilot/claude-sonnet-4.6"
-    },
     "visual-engineering": {
       "model": "alibaba-coding-plan-cn/glm-5"
     },
