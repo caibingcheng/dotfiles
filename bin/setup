@@ -7,6 +7,14 @@ source "${DOTFILES_ROOT}/lib/common.sh" 2>/dev/null || true
 
 ensure_dir "${HOME}/bin"
 
+for link in "${HOME}/bin/"*; do
+    [[ -L "${link}" ]] || continue
+    target=$(readlink -f "${link}" 2>/dev/null) || continue
+    if [[ "${target}" == *"/bin/.archive/"* ]] || [[ ! -e "${target}" ]]; then
+        rm -f "${link}"
+    fi
+done
+
 for script in sf repo_stats oo doo; do
     safe_link "${DOTFILES_ROOT}/bin/${script}" "${HOME}/bin/${script}"
 done
