@@ -15,3 +15,10 @@ ln -sf ${DOTFILES_ROOT}/opencode/agents ${HOME}/.config/opencode/
 
 # Link global AGENTS.md
 ln -sf "${DOTFILES_ROOT}/opencode/global_agents.md" "${HOME}/.config/opencode/AGENTS.md"
+
+# Link commands
+mkdir -p "${HOME}/.config/opencode/commands"
+ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-brainstorm.md" "${HOME}/.config/opencode/commands/bb.md"
+ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-debug.md" "${HOME}/.config/opencode/commands/dd.md"
+ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-exec.md" "${HOME}/.config/opencode/commands/ee.md"
+ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-plan.md" "${HOME}/.config/opencode/commands/pp.md"

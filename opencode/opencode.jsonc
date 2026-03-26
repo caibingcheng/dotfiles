@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  // "formatter": false,
   "default_agent": "plan",
   "agent": {
     "plan": {
@@ -12,18 +13,27 @@
   "plugin": [
     "opencode-antigravity-auth@latest",
     "@tarquinen/opencode-dcp@latest",
-    "superpowers@git+https://github.com/obra/superpowers.git"
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    // "oh-my-openagent@latest",
   ],
   "mcp": {
-    // "WebSearch": {
-    //   "type": "remote",
-    //   "url": "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/mcp",
-    //   "enabled": true
-    // },
-    // "WebParser": {
-    //   "type": "remote",
-    //   "url": "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse",
-    //   "enabled": true
-    // }
+    "WebSearch": {
+      "type": "remote",
+      "url": "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/mcp",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:BAILIAN_MCP_API_KEY}"
+      }
+    },
+    "WebParser": {
+      "type": "remote",
+      "url": "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:BAILIAN_MCP_API_KEY}"
+      }
+    }
   }
 }
