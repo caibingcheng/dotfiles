@@ -68,8 +68,7 @@ Full development environment (includes minimal):
 │   ├── bashrc         # Interactive shell configuration
 │   └── profile        # Environment variables and functions
 ├── bin/               # Custom scripts
-│   ├── backup         # Backup utility
-│   ├── install-nerd-fonts  # Nerd Fonts installer
+│   ├── sf             # Interactive code search
 │   └── ...
 ├── git/               # Git configuration
 │   ├── gitconfig      # Git settings with delta
@@ -92,19 +91,10 @@ Full development environment (includes minimal):
 
 | Script | Description |
 |--------|-------------|
-| `backup` | Backup utility |
-| `bb` | Binary/decimal/hex number converter |
-| `cip` | Choose valid IP from list (ping test) |
-| `escp` | SCP with auto password retry (expect) |
-| `essh` | SSH with auto password retry (expect) |
-| `freebuffercache` | Clear system buffer cache |
-| `install-nerd-fonts` | Install Nerd Fonts (JetBrainsMono, FiraCode, etc.) |
-| `paint` | Real-time data visualization (matplotlib-based plotting) |
-| `pyico` | ICO/PNG icon generator from image |
 | `repo_stats` | Git repository statistics |
 | `sf` | Interactive code search with fzf + ripgrep |
-| `sip` | Show SSH connection IPs |
-| `xyz` | 3D coordinate calculator (distance, vector area) |
+| `oo` | OpenCode tmux session launcher |
+| `doo` | OpenCode tmux session terminator |
 
 ### FZF Scripts (`fzf/`)
 
