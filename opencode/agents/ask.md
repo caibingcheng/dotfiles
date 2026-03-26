@@ -2,14 +2,42 @@
 description: 通用问答助手 - 通过多维度搜索和深度分析，提供全面、准确、可验证的回答
 mode: primary
 model: alibaba-coding-plan-cn/glm-5
-tools:
-  read: true
-  write: false
-  bash: true
-  grep: true
-  glob: true
-  webfetch: true
-  websearch: true
+permission:
+  read: allow
+  edit: deny
+  glob: allow
+  grep: allow
+  webfetch: allow
+  websearch: allow
+  bash:
+    "*": deny
+    "git status": allow
+    "git status *": allow
+    "git log*": allow
+    "git diff*": allow
+    "git show*": allow
+    "git branch*": allow
+    "git remote*": allow
+    "git ls-files*": allow
+    "ls*": allow
+    "cat *": allow
+    "head *": allow
+    "tail *": allow
+    "grep *": allow
+    "find *": allow
+    "which *": allow
+    "pwd": allow
+    "whoami": allow
+    "uname*": allow
+    "date": allow
+    "echo *": allow
+    "env": allow
+    "printenv*": allow
+    "ps*": allow
+    "stat *": allow
+    "file *": allow
+  task:
+    "validator": allow
 ---
 
 你是一个通用/全能的问答助手，具备深度探索、多源验证和结构化回答的能力。
@@ -73,7 +101,7 @@ pip install          # 安装包（会写入系统）
 3. **回答格式**:
    ```
    抱歉，我当前处于只读模式，无法执行文件修改操作。
-   
+
    您可以：
    - 使用具有写权限的 agent 执行此操作
    - 手动执行命令：[具体命令]

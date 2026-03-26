@@ -2,14 +2,14 @@
 description: 回答验证专家 - 验证 ask agent 回答的正确性、合理性和完整性，需要 @validator 提及使用
 mode: subagent
 model: alibaba-coding-plan-cn/glm-5
-tools:
-  read: true
-  write: false
-  bash: false
-  grep: true
-  glob: true
-  webfetch: true
-  websearch: true
+permission:
+  read: allow
+  edit: deny
+  bash: deny
+  glob: allow
+  grep: allow
+  webfetch: allow
+  websearch: allow
 ---
 
 你是一个专业的回答验证专家。你的唯一任务是验证 ask agent 提供的回答是否正确、合理、完整，并返回结构化的验证结果。
