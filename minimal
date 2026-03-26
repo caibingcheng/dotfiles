@@ -87,9 +87,13 @@ update_tldr() {
 # Install Go tools
 install_go_tools() {
     if command -v cargo &>/dev/null; then
-        if ! command -v exa &>/dev/null; then
-            echo "Installing exa..."
-            cargo install exa
+        if ! command -v eza &>/dev/null; then
+            echo "Installing eza..."
+            cargo install eza
+            if command -v exa &>/dev/null; then
+                echo "Removing deprecated exa..."
+                cargo uninstall exa 2>/dev/null || true
+            fi
         fi
     fi
 }

@@ -7,7 +7,7 @@ source "${DOTFILES_ROOT}/lib/common.sh" 2>/dev/null || true
 
 ensure_dir "${HOME}/bin"
 
-for script in sf sip cip essh escp backup freebuffercache paint xyz pyico bb repo_stats oo doo; do
+for script in sf repo_stats oo doo; do
     safe_link "${DOTFILES_ROOT}/bin/${script}" "${HOME}/bin/${script}"
 done
 
