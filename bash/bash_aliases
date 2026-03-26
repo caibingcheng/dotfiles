@@ -47,8 +47,6 @@ alias rr="ranger"
 # ff alias for thefuck
 # ll alias for ls -lh
 # mm alias for make
-alias pp="tgpt"
-alias ss="sgpt"
 
 # FZF integration (fzf 0.48.0+ supports --bash option)
 if command -v fzf &>/dev/null; then

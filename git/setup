@@ -14,17 +14,39 @@ git_check_user() {
 git_config_user() {
     local user_name="" user_email=""
 
-    # Skip interactive config in CI environment
-    if [[ "${CI:-}" == "true" ]]; then
-        log_info "CI environment detected, skipping interactive git config"
+    # 1. Check environment variables first
+    user_name="${GIT_USER_NAME:-}"
+    user_email="${GIT_USER_EMAIL:-}"
+
+    if [[ -n "${user_name}" && -n "${user_email}" ]]; then
+        log_info "Using git config from environment variables"
+        git config --global user.name "${user_name}"
+        git config --global user.email "${user_email}"
         return 0
     fi
 
+    # 2. Skip in CI environment
+    if [[ "${CI:-}" == "true" ]]; then
+        log_info "CI environment detected, skipping interactive git config"
+        log_info "Set GIT_USER_NAME and GIT_USER_EMAIL to configure git"
+        return 0
+    fi
+
+    # 3. Check if /dev/tty is available
+    if [[ ! -e /dev/tty ]]; then
+        log_warn "Non-interactive mode detected (no /dev/tty)"
+        log_warn "Please configure git manually:"
+        log_warn "  git config --global user.name \"Your Name\""
+        log_warn "  git config --global user.email \"your@email.com\""
+        return 0
+    fi
+
+    # 4. Read from /dev/tty for interactive input
     while [[ -z "${user_name}" ]]; do
-        read -r -p "    user.name: " user_name
+        read -r -p "    user.name: " user_name < /dev/tty
     done
     while [[ -z "${user_email}" ]]; do
-        read -r -p "    user.email: " user_email
+        read -r -p "    user.email: " user_email < /dev/tty
     done
     git config --global user.name "${user_name}"
     git config --global user.email "${user_email}"

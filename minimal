@@ -86,13 +86,6 @@ update_tldr() {
 
 # Install Go tools
 install_go_tools() {
-    if command -v go &>/dev/null; then
-        if ! command -v tgpt &>/dev/null; then
-            echo "Installing tgpt..."
-            go install github.com/aandrew-me/tgpt/v2@latest
-        fi
-    fi
-
     if command -v cargo &>/dev/null; then
         if ! command -v exa &>/dev/null; then
             echo "Installing exa..."

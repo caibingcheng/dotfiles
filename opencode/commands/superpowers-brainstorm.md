@@ -6,6 +6,8 @@ description: "Start a new feature with Superpowers brainstorming"
 
 Use the skill tool to load the "superpowers:brainstorming" skills.
 
-When find you DO NOT have the permissions to write specs/plans at current project/workspace, STOP immediately and ask for the permissions. DO NOT continue without the permissions.
+When find you DO NOT have the permissions to write specs/plans at current project/workspace, STOP immediately and ask for the permissions.
+DO NOT continue without the permissions.
+DO NOT run a question tool, just STOP immediately and user will change to a writing-enabled agent.
 
 </SKILL_REQUIREMENT>
