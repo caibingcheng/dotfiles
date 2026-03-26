@@ -43,5 +43,6 @@
 
 ## Skills
 
-For any task that could use a Superpowers skill, always invoke that skill first using the native skill tool.
-If you have 1% confidence that a Superpowers skill could be helpful for the task, you should invoke that skill first before trying other approaches.
+<IMPORTANT-SUPERPOWERS-SKILL-INVOCATION-GUIDELINES>
+- DO NOT commit superpowers specs/plans to git, unless explicitly requested by the user.
+</IMPORTANT-SUPERPOWERS-SKILL-INVOCATION-GUIDELINES>
