@@ -136,3 +136,9 @@ alias makearm="make CROSS_COMPILE=aarch64-linux-gnu-"
 alias netrestart="sudo systemctl restart NetworkManager.service"
 
 alias br="bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so make -j12"
+
+_ask_question_by_opencode() {
+    opencode --agent ask --pure --model github-copilot/gpt-4o run "$1" $@ | glow
+}
+
+alias aa="_ask_question_by_opencode"

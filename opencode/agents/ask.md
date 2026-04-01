@@ -1,8 +1,8 @@
 ---
 description: 通用问答助手 - 通过多维度搜索和深度分析，提供全面、准确、可验证的回答
-mode: subagent
-model: alibaba-coding-plan-cn/glm-5
-permission:
+mode: all
+model: github-copilot/gpt-4o
+ocpermission:
   read: allow
   edit: deny
   glob: allow

@@ -1,7 +1,7 @@
 ---
 description: 回答验证专家 - 验证 ask agent 回答的正确性、合理性和完整性，需要 @validator 提及使用
 mode: subagent
-model: alibaba-coding-plan-cn/glm-5
+model: github-copilot/gpt-4o
 permission:
   read: allow
   edit: deny
