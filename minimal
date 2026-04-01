@@ -85,15 +85,11 @@ update_tldr() {
 }
 
 # Install Go tools
-install_go_tools() {
+install_cargo_tools() {
     if command -v cargo &>/dev/null; then
-        if ! command -v eza &>/dev/null; then
-            echo "Installing eza..."
-            cargo install eza
-            if command -v exa &>/dev/null; then
-                echo "Removing deprecated exa..."
-                cargo uninstall exa 2>/dev/null || true
-            fi
+        if command -v exa &>/dev/null; then
+            echo "Removing deprecated exa..."
+            cargo uninstall exa 2>/dev/null || true
         fi
     fi
 }
@@ -107,7 +103,7 @@ main() {
     install_rust
     install_homebrew
     update_tldr
-    install_go_tools
+    install_cargo_tools
 
     echo "Minimal installation completed!"
 }
