@@ -46,3 +46,9 @@
 <IMPORTANT-SUPERPOWERS-SKILL-INVOCATION-GUIDELINES>
 - DO NOT commit superpowers specs/plans to git, unless explicitly requested by the user.
 </IMPORTANT-SUPERPOWERS-SKILL-INVOCATION-GUIDELINES>
+
+## Question Asking
+
+<IMPORTANT-QUESTION-ASKING-GUIDELINES>
+When model provider is 'github-copilot', you should use 'question tool' to ask questions or requirements clarification, even for simple yes/no questions or choice questions. Do not ask questions directly to the user.
+</IMPORTANT-QUESTION-ASKING-GUIDELINES>

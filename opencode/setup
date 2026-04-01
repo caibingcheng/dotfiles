@@ -22,3 +22,4 @@ ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-brainstorm.md" "${HOME}/.
 ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-debug.md" "${HOME}/.config/opencode/commands/dd.md"
 ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-exec.md" "${HOME}/.config/opencode/commands/ee.md"
 ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-plan.md" "${HOME}/.config/opencode/commands/pp.md"
+ln -sf "${DOTFILES_ROOT}/opencode/commands/superpowers-continue-exec.md" "${HOME}/.config/opencode/commands/cee.md"

@@ -4,7 +4,7 @@
     "google_search": "deny"
   },
   // "formatter": false,
-  "default_agent": "plan",
+  "default_agent": "build",
   "agent": {
     "plan": {
       "model": "alibaba-coding-plan-cn/glm-5"
