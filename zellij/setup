@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "${DOTFILES_ROOT}/lib/common.sh"
+
+log_info "Configuring zellij..."
+
+# Create config directory
+ensure_dir "${HOME}/.config/zellij"
+
+# Link zellij config
+safe_link "${DOTFILES_ROOT}/zellij/config.kdl" "${HOME}/.config/zellij/config.kdl"
+
+log_info "Zellij configuration complete!"
