@@ -35,4 +35,4 @@ alias gsll="gits log"
 alias gsdd="gits diff"
 
 # Alternative git UI tools
-alias gg="gitui"
+alias gg="lazygit"

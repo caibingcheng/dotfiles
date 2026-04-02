@@ -1,7 +1,7 @@
 brew "bat"
 brew "fd"
 brew "fzf"
-brew "gitui"
+# brew "gitui"
 brew "ripgrep"
 brew "tealdeer"
 brew "autossh"
