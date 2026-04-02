@@ -208,7 +208,6 @@ run_all_setups() {
     run_module_setup "tmux"
     run_module_setup "clang"
     run_module_setup "tealdeer"
-    run_module_setup "opencode"
     run_module_setup "docker"
     run_module_setup "starship"
     run_module_setup "direnv"
