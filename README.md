@@ -39,7 +39,6 @@ curl -fsSL https://raw.githubusercontent.com/caibingcheng/dotfiles/main/bootstra
 | **brew/** | Homebrew package definitions |
 | **rust/** | Rust toolchain installation |
 | **node/** | Node.js with nvm installation and maintenance |
-| **opencode/** | Opencode agent configuration |
 
 ## Installation Levels
 
@@ -99,7 +98,6 @@ Full development environment (includes minimal):
 |--------|-------------|
 | `repo_stats` | Git repository statistics |
 | `sf` | Interactive code search with fzf + ripgrep |
-| `oo` | OpenCode zellij session launcher |
 
 ### FZF Scripts (`fzf/`)
 
@@ -281,7 +279,6 @@ fzf-apt install      # Interactive apt install
 
 ### Development Tools
 
-- **Opencode**: AI agent configuration
 - **Tmux**: Oh-my-tmux with plugins (resurrect, continuum, cpu)
 - **Tealdeer**: Fast tldr pages client
 

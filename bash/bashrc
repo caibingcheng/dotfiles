@@ -155,9 +155,6 @@ export EDITOR="vim"
 # eval "$(pyenv init --path)"
 # eval "$(pyenv virtualenv-init -)"
 
-# opencode
-export PATH=/home/bing/.opencode/bin:$PATH
-
 # Docker aliases
 if [ -f ~/.docker_aliases ]; then
     . ~/.docker_aliases
