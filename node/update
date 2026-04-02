@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# Update nvm and Node.js versions
+
+NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+
+# Source nvm
+# shellcheck source=/dev/null
+source "${NVM_DIR}/nvm.sh"
+
+update_nvm() {
+    echo "Updating nvm itself..."
+    (
+        cd "${NVM_DIR}"
+        git fetch --tags
+        local latest_tag
+        latest_tag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
+        git checkout "${latest_tag}"
+        echo "nvm updated to ${latest_tag}"
+    )
+}
+
+update_node() {
+    echo "Checking for Node.js LTS updates..."
+    
+    # Get current default version
+    local current_version
+    current_version=$(nvm current)
+    
+    # Install latest LTS
+    nvm install --lts --latest-npm
+    
+    # Get new version
+    local new_version
+    new_version=$(nvm version-lts)
+    
+    # Set as default
+    nvm alias default lts
+    nvm use default
+    
+    if [[ "${current_version}" != "${new_version}" ]]; then
+        echo "Node.js updated from ${current_version} to ${new_version}"
+        
+        # Migrate global packages
+        echo "Migrating global packages..."
+        nvm reinstall-packages "${current_version}" 2>/dev/null || true
+    else
+        echo "Node.js is already at the latest LTS: ${new_version}"
+    fi
+}
+
+update_global_packages() {
+    echo "Updating global npm packages..."
+    npm update -g
+}
+
+cleanup_old_versions() {
+    echo "Cleaning up old Node.js versions..."
+    
+    local current
+    current=$(nvm current)
+    
+    # List all installed versions
+    local versions
+    versions=$(nvm ls --no-alias --no-colors | grep -E '^\s*v[0-9]+' | awk '{print $1}' | tr -d '*')
+    
+    for version in $versions; do
+        if [[ "${version}" != "${current}" ]]; then
+            echo "Removing ${version}..."
+            nvm uninstall "${version}" 2>/dev/null || true
+        fi
+    done
+    
+    echo "Cleanup complete!"
+}
+
+show_status() {
+    echo ""
+    echo "=== Node.js Environment Status ==="
+    echo "Node.js: $(node --version)"
+    echo "npm: $(npm --version)"
+    
+    if command -v yarn &>/dev/null; then
+        echo "yarn: $(yarn --version)"
+    fi
+    
+    if command -v pnpm &>/dev/null; then
+        echo "pnpm: $(pnpm --version)"
+    fi
+    
+    echo ""
+    echo "nvm version: $(nvm --version)"
+    echo "Default Node.js: $(nvm alias default 2>/dev/null | awk '{print $2}')"
+    echo "================================="
+}
+
+main() {
+    echo "Updating Node.js environment..."
+    echo ""
+
+    case "${1:-all}" in
+        nvm)
+            update_nvm
+            ;;
+        node)
+            update_node
+            ;;
+        packages)
+            update_global_packages
+            ;;
+        cleanup)
+            cleanup_old_versions
+            ;;
+        status)
+            show_status
+            ;;
+        all)
+            update_nvm
+            update_node
+            update_global_packages
+            cleanup_old_versions
+            show_status
+            ;;
+        *)
+            echo "Usage: $0 {nvm|node|packages|cleanup|status|all}"
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

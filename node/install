@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+
+set -euo pipefail
+
+# Install and setup Node.js development environment with nvm
+
+NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+NVM_VERSION="v0.39.7"
+
+install_nvm() {
+    if [[ -d "${NVM_DIR}" ]]; then
+        echo "nvm is already installed at ${NVM_DIR}"
+        return 0
+    fi
+
+    echo "Installing nvm ${NVM_VERSION}..."
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+
+    # Source nvm for current session
+    # shellcheck source=/dev/null
+    source "${NVM_DIR}/nvm.sh"
+}
+
+install_node() {
+    echo "Installing Node.js LTS version..."
+    nvm install --lts
+    nvm use --lts
+    nvm alias default lts
+
+    local node_version
+    node_version=$(node --version)
+    local npm_version
+    npm_version=$(npm --version)
+
+    echo "Node.js ${node_version} and npm ${npm_version} installed successfully!"
+}
+
+install_global_packages() {
+    echo "Installing common global npm packages..."
+    npm install -g \
+        npm@latest \
+        yarn \
+        pnpm \
+        2>/dev/null || echo "Warning: Some packages may have failed to install"
+}
+
+configure_npm_mirror() {
+    echo "Configuring npm mirror for China..."
+    npm config set registry https://registry.npmmirror.com
+}
+
+main() {
+    install_nvm
+
+    # Source nvm if not already loaded
+    if [[ -z "${NVM_LOADED:-}" ]]; then
+        # shellcheck source=/dev/null
+        source "${NVM_DIR}/nvm.sh" --no-use
+        export NVM_LOADED=true
+    fi
+
+    install_node
+    install_global_packages
+    configure_npm_mirror
+
+    echo ""
+    echo "Node.js environment setup complete!"
+    echo ""
+    echo "To use nvm in a new shell, add the following to your ~/.bashrc:"
+    echo '  export NVM_DIR="$HOME/.nvm"'
+    echo '  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
+    echo '  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'
+}
+
+main "$@"

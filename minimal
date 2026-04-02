@@ -94,6 +94,17 @@ install_cargo_tools() {
     fi
 }
 
+# Install Node.js with nvm
+install_node() {
+    if ! command -v nvm &>/dev/null && [[ ! -d "${NVM_DIR:-$HOME/.nvm}" ]]; then
+        echo "Installing Node.js..."
+        # shellcheck source=/dev/null
+        source "${DOTFILES_ROOT}/node/install"
+    else
+        echo "Node.js already installed (nvm found)"
+    fi
+}
+
 # Main
 main() {
     echo "Starting minimal installation..."
@@ -101,6 +112,7 @@ main() {
     update_github_hosts
     install_base_packages
     install_rust
+    install_node
     install_homebrew
     update_tldr
     install_cargo_tools

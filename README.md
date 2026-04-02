@@ -38,6 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/caibingcheng/dotfiles/main/bootstra
 | **docker/** | Docker aliases and helper functions |
 | **brew/** | Homebrew package definitions |
 | **rust/** | Rust toolchain installation |
+| **node/** | Node.js with nvm installation and maintenance |
 | **opencode/** | Opencode agent configuration |
 
 ## Installation Levels
@@ -48,6 +49,7 @@ Essential tools for development:
 - Core packages (curl, git, vim, build-essential, python3)
 - Homebrew
 - Rust
+- Node.js (with nvm)
 - Base dotfiles configuration
 
 ### Standard (`standard`)
@@ -78,6 +80,10 @@ Full development environment (includes minimal):
 ├── direnv/            # Direnv configuration
 ├── docker/            # Docker aliases
 ├── fzf/               # Fzf utility scripts
+├── node/              # Node.js with nvm
+│   ├── install        # Install nvm and Node.js LTS
+│   ├── update         # Update and maintenance scripts
+│   └── README.md      # Node.js usage documentation
 ├── lib/               # Shared library functions
 ├── bootstrap          # Main installation script
 ├── minimal            # Minimal installation
@@ -93,8 +99,7 @@ Full development environment (includes minimal):
 |--------|-------------|
 | `repo_stats` | Git repository statistics |
 | `sf` | Interactive code search with fzf + ripgrep |
-| `oo` | OpenCode tmux session launcher |
-| `doo` | OpenCode tmux session terminator |
+| `oo` | OpenCode zellij session launcher |
 
 ### FZF Scripts (`fzf/`)
 
@@ -119,6 +124,40 @@ Full development environment (includes minimal):
 | `dshell` | Enter container shell |
 | `dstats` | Show container resource usage |
 | `dprune` | Clean up Docker resources |
+
+### Node.js Scripts (`node/`)
+
+| Script | Description |
+|--------|-------------|
+| `install` | Install nvm and Node.js LTS version |
+| `update` | Update nvm, Node.js, and global packages |
+
+#### Node.js Usage
+
+```bash
+# Install Node.js environment
+source ~/.dotfiles/node/install
+
+# Update everything
+source ~/.dotfiles/node/update all
+
+# Update specific components
+source ~/.dotfiles/node/update nvm     # Update nvm only
+source ~/.dotfiles/node/update node    # Update Node.js only
+source ~/.dotfiles/node/update packages # Update global npm packages
+source ~/.dotfiles/node/update cleanup # Remove old Node.js versions
+source ~/.dotfiles/node/update status  # Show current status
+```
+
+#### Common nvm Commands
+
+```bash
+nvm install --lts        # Install latest LTS
+nvm use --lts            # Switch to LTS
+nvm alias default lts    # Set default version
+nvm ls                   # List installed versions
+nvm current              # Show current version
+```
 
 ## Usage
 
