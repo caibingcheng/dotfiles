@@ -1,2 +1,5 @@
 ignore*/
 .envrc
+.env
+*.pem
+*.key
