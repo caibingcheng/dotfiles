@@ -31,12 +31,67 @@ update_github_hosts() {
     ' bash "${tmp_hosts}"
 }
 
+# Auto-detect and repair broken apt sources (missing Release files and expired GPG keys), then retry.
+# Works across Ubuntu 20.04 / 22.04 / 24.04 without any hardcoded repo or key IDs.
+_apt_update_with_repair() {
+    local output exit_code repaired=false
+
+    output=$(${SUDO} apt update 2>&1)
+    exit_code=$?
+    echo "$output"
+    [[ $exit_code -eq 0 ]] && return 0
+
+    # Disable source files for repos that no longer publish a Release file (404 / discontinued PPAs)
+    local bad_repo_urls
+    bad_repo_urls=$(echo "$output" | grep "does not have a Release file" | \
+        grep -oP 'https?://\S+' || true)
+    while IFS= read -r repo_url; do
+        [[ -z "$repo_url" ]] && continue
+        local source_files
+        source_files=$(grep -rl "$repo_url" /etc/apt/sources.list.d/ 2>/dev/null || true)
+        if [[ -n "$source_files" ]]; then
+            while IFS= read -r f; do
+                echo "Disabling invalid source: $f"
+                ${SUDO} mv "$f" "${f}.disabled"
+            done <<< "$source_files"
+            repaired=true
+        fi
+    done <<< "$bad_repo_urls"
+
+    # Refresh expired or missing GPG keys (supports Ubuntu 20.04-24.04)
+    local bad_keys
+    bad_keys=$(echo "$output" | grep -oP '(?<=EXPKEYSIG |NO_PUBKEY )[A-F0-9]+' | sort -u || true)
+    while IFS= read -r key; do
+        [[ -z "$key" ]] && continue
+        echo "Refreshing GPG key: $key"
+        # apt-key is deprecated on 22.04+ but still functional; fallback uses trusted.gpg.d
+        ${SUDO} apt-key adv --keyserver keyserver.ubuntu.com --recv-keys "$key" 2>/dev/null || \
+            curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${key}" | \
+            gpg --dearmor | ${SUDO} tee "/etc/apt/trusted.gpg.d/${key}.gpg" >/dev/null 2>&1 || true
+        repaired=true
+    done <<< "$bad_keys"
+
+    if [[ "$repaired" == true ]]; then
+        echo "Retrying apt update after repairs..."
+        ${SUDO} apt update || {
+            echo "Warning: apt update still failing after repairs." >&2
+            return 1
+        }
+    else
+        echo "Warning: apt update failed with unrecognized errors." >&2
+        return 1
+    fi
+}
+
 # Install base packages
 install_base_packages() {
     if [[ -z "${APT_UPDATED_DONE:-}" ]]; then
-        ${SUDO} apt update
+        _apt_update_with_repair
         export APT_UPDATED_DONE=true
     fi
+
+    # Fix any pre-existing broken dependencies before installing
+    ${SUDO} apt --fix-broken install -y
 
     ${SUDO} apt install -y \
         curl wget git preload \
