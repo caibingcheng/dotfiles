@@ -3,3 +3,11 @@ ignore*/
 .env
 *.pem
 *.key
+.sisyphus/
+*.gcda
+*.gcno
+*.o
+a.out
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
