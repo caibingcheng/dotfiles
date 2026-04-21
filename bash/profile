@@ -109,16 +109,6 @@ function only_uptime() {
     fi
 }
 
-# integration zoxide with fzf
-function zz() {
-  local dir=$(
-    zoxide query --list --score |
-    fzf --height 40% --layout reverse --info inline \
-        --nth 2.. --tac --no-sort --query "$*" \
-        --bind 'enter:become:echo {2..}'
-  ) && cd "$dir"
-}
-
 # integration git with fzf
 # fgb - checkout git branch/tag, with a preview showing the commits between the tag/branch and HEAD
 fgb() {
