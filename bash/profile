@@ -200,4 +200,4 @@ export -f only_uptime
 
 export HISTSIZE=10000
 export HISTFILESIZE=1000000
-declare PROMPT_COMMAND="history -a"
+declare PROMPT_COMMAND="stty sane 2>/dev/null; history -a"
