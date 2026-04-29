@@ -15,7 +15,7 @@ for link in "${HOME}/bin/"*; do
     fi
 done
 
-for script in sf repo_stats oo doo opencode-env; do
+for script in sf repo_stats oo doo; do
     safe_link "${DOTFILES_ROOT}/bin/${script}" "${HOME}/bin/${script}"
 done
 
